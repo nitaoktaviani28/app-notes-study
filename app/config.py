@@ -22,6 +22,7 @@ class Settings:
 
     aws_region: str = os.getenv("AWS_REGION", "us-east-1")
     bedrock_model_id: str = os.getenv("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0")
+    bedrock_inference_profile_id: str = os.getenv("BEDROCK_INFERENCE_PROFILE_ID", "")
     s3_bucket: str = os.getenv("S3_BUCKET", "")
     s3_region: str = os.getenv("S3_REGION", "")
     s3_prefix: str = os.getenv("S3_PREFIX", "complite-study/materials")
