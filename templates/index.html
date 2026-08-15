@@ -147,13 +147,8 @@
               <span>{{ m.title }} | {{ m.course.name }} | folder: {{ m.folder_name }}</span>
               <div class="material-actions">
                 <a href="/materials/{{ m.id }}/open" target="_blank">Buka Dokumen</a>
-                <form method="post" action="/materials/{{ m.id }}/summarize" class="inline-form"><button type="submit">AI Summary</button></form>
-                <form method="post" action="/materials/{{ m.id }}/quiz" class="inline-form"><button type="submit">AI Quiz Soal</button></form>
-                <form method="post" action="/materials/{{ m.id }}/delete" class="inline-form danger-inline">
-                  <button type="submit" onclick="return confirm('Hapus materi ini? Hasil AI terkait juga ikut terhapus.')">Delete Materi</button>
-                </form>
-                <button type="button" class="open-ai-modal-btn" data-ai-type="summary" data-material-id="{{ m.id }}">Lihat Summary</button>
-                <button type="button" class="open-ai-modal-btn" data-ai-type="quiz" data-material-id="{{ m.id }}">Lihat Quiz</button>
+                <form method="post" action="/materials/{{ m.id }}/summarize" class="inline-form ai-action-form" data-ai-type="summary"><button type="submit">AI Summary</button></form>
+                <form method="post" action="/materials/{{ m.id }}/quiz" class="inline-form ai-action-form" data-ai-type="quiz"><button type="submit">AI Quiz</button></form>
               </div>
             </div>
             <div class="material-ai-data" hidden>

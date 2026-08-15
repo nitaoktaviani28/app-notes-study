@@ -358,8 +358,7 @@ function setupAiModal() {
   const modalBody = document.getElementById("aiModalBody");
   const modalTitle = document.getElementById("aiModalTitle");
   const closeBtn = document.getElementById("closeAiModal");
-  const openButtons = document.querySelectorAll(".open-ai-modal-btn");
-  if (!modal || !modalBody || !modalTitle || !closeBtn || !openButtons.length) {
+  if (!modal || !modalBody || !modalTitle || !closeBtn) {
     return;
   }
 
@@ -395,9 +394,22 @@ function setupAiModal() {
     modal.setAttribute("aria-hidden", "false");
   };
 
-  openButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      openModal(btn.dataset.materialId, btn.dataset.aiType);
+  document.querySelectorAll(".ai-action-form[data-ai-type]").forEach((formEl) => {
+    formEl.addEventListener("submit", (event) => {
+      const materialItem = formEl.closest(".material-item[data-material-id]");
+      if (!materialItem) {
+        return;
+      }
+
+      const aiType = formEl.dataset.aiType;
+      const hasSummary = Boolean(materialItem.querySelector(".summary-content")?.textContent?.trim());
+      const hasQuiz = Boolean(materialItem.querySelector(".quiz-content")?.textContent?.trim());
+      const hasResult = aiType === "summary" ? hasSummary : hasQuiz;
+
+      if (hasResult) {
+        event.preventDefault();
+        openModal(materialItem.dataset.materialId, aiType);
+      }
     });
   });
 
