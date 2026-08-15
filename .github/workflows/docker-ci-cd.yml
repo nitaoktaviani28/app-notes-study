@@ -61,6 +61,7 @@ jobs:
           script: |
             set -e
             mkdir -p /home/ubuntu/complite-study
+            mkdir -p /home/ubuntu/complite-study/data
             if [ -z "$APP_ENV_FILE" ]; then
               echo "APP_ENV_FILE secret kosong"
               exit 1
@@ -71,6 +72,7 @@ jobs:
             docker run -d --name complite-study \
               --restart unless-stopped \
               --env-file /home/ubuntu/complite-study/.env \
+              -v /home/ubuntu/complite-study/data:/app/data \
               -p 8000:8000 \
               haechanlovelove/complite-study:latest
             docker image prune -f

@@ -21,9 +21,9 @@ from app.s3_service import s3_is_enabled, s3_storage, safe_create_presigned_url,
 from app.schemas import CourseCreate, GradeCreate, PomodoroCreate, RoutineCreate, ScheduleCreate
 from app.telegram_service import send_telegram_message
 
-Base.metadata.create_all(bind=engine)
 ensure_folder(settings.storage_dir)
 ensure_folder("./data")
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=settings.app_name)
 app.mount("/static", StaticFiles(directory="static"), name="static")
