@@ -4,6 +4,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -44,7 +45,12 @@ ensure_schema_updates()
 app = FastAPI(title=settings.app_name)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-scheduler = AsyncIOScheduler()
+try:
+    APP_TZ = ZoneInfo(settings.app_timezone)
+except ZoneInfoNotFoundError:
+    APP_TZ = ZoneInfo("UTC")
+
+scheduler = AsyncIOScheduler(timezone=APP_TZ)
 
 
 def validate_storage_configuration() -> None:
@@ -55,7 +61,7 @@ def validate_storage_configuration() -> None:
 
 
 async def schedule_alert_job() -> None:
-    now = datetime.now()
+    now = datetime.now(APP_TZ)
     current_day = now.strftime("%a").lower()
     current_date = now.strftime("%Y-%m-%d")
     current_time = now.strftime("%H:%M")
@@ -104,7 +110,7 @@ async def schedule_alert_job() -> None:
 async def on_startup() -> None:
     validate_storage_configuration()
     if not scheduler.running:
-        scheduler.add_job(schedule_alert_job, "cron", minute="*")
+        scheduler.add_job(schedule_alert_job, "cron", minute="*", timezone=APP_TZ)
         scheduler.start()
 
 

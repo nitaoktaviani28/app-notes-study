@@ -12,6 +12,7 @@ class Settings:
     app_env: str = os.getenv("APP_ENV", "dev")
     host: str = os.getenv("APP_HOST", "0.0.0.0")
     port: int = int(os.getenv("APP_PORT", "8000"))
+    app_timezone: str = os.getenv("APP_TIMEZONE", "Asia/Jakarta")
     database_url: str = os.getenv("DATABASE_URL", "sqlite:///./data/complite_study.db")
     storage_dir: str = os.getenv("STORAGE_DIR", "./storage")
     storage_backend: str = os.getenv("STORAGE_BACKEND", "s3")
