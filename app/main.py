@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -48,7 +48,8 @@ templates = Jinja2Templates(directory="templates")
 try:
     APP_TZ = ZoneInfo(settings.app_timezone)
 except ZoneInfoNotFoundError:
-    APP_TZ = ZoneInfo("UTC")
+    # Fallback to WIB fixed offset so reminders still align with Indonesia time.
+    APP_TZ = timezone(timedelta(hours=7), name="WIB")
 
 scheduler = AsyncIOScheduler(timezone=APP_TZ)
 
@@ -391,3 +392,21 @@ def material_results(request: Request, material_id: int, db: Session = Depends(g
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/debug/time")
+def debug_time():
+    now_local = datetime.now(APP_TZ)
+    return {
+        "app_timezone": str(APP_TZ),
+        "now_local": now_local.isoformat(),
+        "date": now_local.strftime("%Y-%m-%d"),
+        "time": now_local.strftime("%H:%M"),
+    }
+
+
+@app.post("/debug/send-telegram")
+async def debug_send_telegram():
+    now_local = datetime.now(APP_TZ).strftime("%Y-%m-%d %H:%M:%S")
+    sent = await send_telegram_message(f"[Debug] Test telegram dari complite-study jam {now_local} ({APP_TZ})")
+    return {"sent": sent}
