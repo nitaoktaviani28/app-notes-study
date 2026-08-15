@@ -152,28 +152,13 @@
                 <form method="post" action="/materials/{{ m.id }}/delete" class="inline-form danger-inline">
                   <button type="submit" onclick="return confirm('Hapus materi ini? Hasil AI terkait juga ikut terhapus.')">Delete Materi</button>
                 </form>
+                <button type="button" class="open-ai-modal-btn" data-ai-type="summary" data-material-id="{{ m.id }}">Lihat Summary</button>
+                <button type="button" class="open-ai-modal-btn" data-ai-type="quiz" data-material-id="{{ m.id }}">Lihat Quiz</button>
               </div>
             </div>
-
-            <div class="ai-inline-grid">
-              <article class="ai-box">
-                <h4>AI Summary</h4>
-                {% if latest_summary %}
-                  <pre>{{ latest_summary.content }}</pre>
-                {% else %}
-                  <p class="helper-text">Belum ada summary. Klik tombol AI Summary.</p>
-                {% endif %}
-              </article>
-
-              <article class="ai-box quiz-box" data-quiz-content="{{ (latest_quiz.content if latest_quiz else '')|tojson|forceescape }}">
-                <h4>AI Quiz Soal</h4>
-                {% if latest_quiz %}
-                  <div class="quiz-render"></div>
-                  <pre class="quiz-fallback" hidden>{{ latest_quiz.content }}</pre>
-                {% else %}
-                  <p class="helper-text">Belum ada quiz. Klik tombol AI Quiz Soal.</p>
-                {% endif %}
-              </article>
+            <div class="material-ai-data" hidden>
+              <pre class="summary-content">{{ latest_summary.content if latest_summary else '' }}</pre>
+              <pre class="quiz-content">{{ latest_quiz.content if latest_quiz else '' }}</pre>
             </div>
           </li>
         {% endfor %}
@@ -271,6 +256,16 @@
     <button class="feature-btn" data-target="gradesPanel" type="button">Nilai</button>
     <button class="feature-btn" data-target="pomodoroPanel" type="button">Timer</button>
   </nav>
+
+  <div id="aiModal" class="ai-modal" aria-hidden="true">
+    <div class="ai-modal-card" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+      <div class="ai-modal-header">
+        <h3 id="aiModalTitle">AI Result</h3>
+        <button id="closeAiModal" type="button" class="ai-modal-close" aria-label="Tutup">X</button>
+      </div>
+      <div id="aiModalBody" class="ai-modal-body"></div>
+    </div>
+  </div>
 
   <script>
     window.calendarItems = [

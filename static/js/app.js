@@ -273,93 +273,150 @@ function parseQuizBlocks(rawText) {
   });
 }
 
-function renderQuizInteractive() {
-  const quizBoxes = document.querySelectorAll(".quiz-box[data-quiz-content]");
-  if (!quizBoxes.length) {
+function renderQuizInteractive(rawQuizText, container) {
+  if (!container) {
     return;
   }
 
-  quizBoxes.forEach((box) => {
-    const renderTarget = box.querySelector(".quiz-render");
-    const fallback = box.querySelector(".quiz-fallback");
-    if (!renderTarget) {
-      return;
-    }
+  const quizItems = parseQuizBlocks(rawQuizText);
+  if (!quizItems.length) {
+    const fallback = document.createElement("pre");
+    fallback.textContent = rawQuizText || "Belum ada quiz. Klik AI Quiz Soal dulu.";
+    container.appendChild(fallback);
+    return;
+  }
 
-    let decoded = box.dataset.quizContent || "";
-    try {
-      decoded = JSON.parse(decoded);
-    } catch (_error) {
-      // Keep original value when the content is already plain text.
-    }
+  const choiceKeys = ["A", "B", "C", "D"];
+  quizItems.forEach((item, index) => {
+    const wrapper = document.createElement("section");
+    wrapper.className = "quiz-item";
 
-    const quizItems = parseQuizBlocks(decoded);
-    if (!quizItems.length) {
-      if (fallback) {
-        fallback.hidden = false;
-      }
-      return;
-    }
+    const title = document.createElement("p");
+    title.className = "quiz-question";
+    title.textContent = `${index + 1}. ${item.question}`;
+    wrapper.appendChild(title);
 
-    renderTarget.innerHTML = "";
-    const choiceKeys = ["A", "B", "C", "D"];
+    const choices = document.createElement("div");
+    choices.className = "quiz-choices";
 
-    quizItems.forEach((item, index) => {
-      const wrapper = document.createElement("section");
-      wrapper.className = "quiz-item";
+    const feedback = document.createElement("div");
+    feedback.className = "quiz-feedback";
+    feedback.textContent = "Pilih jawaban A/B/C/D untuk cek hasil.";
 
-      const title = document.createElement("p");
-      title.className = "quiz-question";
-      title.textContent = `${index + 1}. ${item.question}`;
-      wrapper.appendChild(title);
+    choiceKeys.forEach((key) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "quiz-choice";
+      const optText = item.options[key] || `Pilihan ${key}`;
+      btn.textContent = `${key}. ${optText}`;
 
-      const choices = document.createElement("div");
-      choices.className = "quiz-choices";
-
-      const feedback = document.createElement("div");
-      feedback.className = "quiz-feedback";
-      feedback.textContent = "Pilih jawaban A/B/C/D untuk cek hasil.";
-
-      choiceKeys.forEach((key) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "quiz-choice";
-        const optText = item.options[key] || `Pilihan ${key}`;
-        btn.textContent = `${key}. ${optText}`;
-
-        btn.addEventListener("click", () => {
-          const isCorrect = item.answer === key && Boolean(item.answer);
-          choices.querySelectorAll(".quiz-choice").forEach((choiceEl) => {
-            choiceEl.classList.remove("is-correct", "is-wrong");
-          });
-
-          if (isCorrect) {
-            btn.classList.add("is-correct");
-            feedback.innerHTML = `<strong>Benar.</strong> ${item.explanation}`;
-            feedback.classList.remove("wrong");
-            feedback.classList.add("correct");
-            return;
-          }
-
-          btn.classList.add("is-wrong");
-          const correctText = item.options[item.answer] || "Jawaban tidak tersedia";
-          const answerLabel = item.answer || "-";
-          feedback.innerHTML = `<strong>Belum tepat.</strong> Jawaban benar: ${answerLabel}. ${correctText}. ${item.explanation}`;
-          feedback.classList.remove("correct");
-          feedback.classList.add("wrong");
+      btn.addEventListener("click", () => {
+        const isCorrect = item.answer === key && Boolean(item.answer);
+        choices.querySelectorAll(".quiz-choice").forEach((choiceEl) => {
+          choiceEl.classList.remove("is-correct", "is-wrong");
         });
 
-        choices.appendChild(btn);
+        if (isCorrect) {
+          btn.classList.add("is-correct");
+          feedback.innerHTML = `<strong>Benar.</strong> ${item.explanation}`;
+          feedback.classList.remove("wrong");
+          feedback.classList.add("correct");
+          return;
+        }
+
+        btn.classList.add("is-wrong");
+        const correctText = item.options[item.answer] || "Jawaban tidak tersedia";
+        const answerLabel = item.answer || "-";
+        feedback.innerHTML = `<strong>Belum tepat.</strong> Jawaban benar: ${answerLabel}. ${correctText}. ${item.explanation}`;
+        feedback.classList.remove("correct");
+        feedback.classList.add("wrong");
       });
 
-      wrapper.appendChild(choices);
-      wrapper.appendChild(feedback);
-      renderTarget.appendChild(wrapper);
+      choices.appendChild(btn);
     });
+
+    wrapper.appendChild(choices);
+    wrapper.appendChild(feedback);
+    container.appendChild(wrapper);
   });
 }
 
-renderQuizInteractive();
+function sanitizeSummaryText(rawText) {
+  if (!rawText) {
+    return "Belum ada summary. Klik AI Summary dulu.";
+  }
+
+  return rawText
+    .replace(/\*\*/g, "")
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function setupAiModal() {
+  const modal = document.getElementById("aiModal");
+  const modalBody = document.getElementById("aiModalBody");
+  const modalTitle = document.getElementById("aiModalTitle");
+  const closeBtn = document.getElementById("closeAiModal");
+  const openButtons = document.querySelectorAll(".open-ai-modal-btn");
+  if (!modal || !modalBody || !modalTitle || !closeBtn || !openButtons.length) {
+    return;
+  }
+
+  const closeModal = () => {
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    modalBody.innerHTML = "";
+  };
+
+  const openModal = (materialId, aiType) => {
+    const materialItem = document.querySelector(`.material-item[data-material-id=\"${materialId}\"]`);
+    if (!materialItem) {
+      return;
+    }
+
+    const summaryEl = materialItem.querySelector(".summary-content");
+    const quizEl = materialItem.querySelector(".quiz-content");
+    const summaryText = summaryEl ? summaryEl.textContent : "";
+    const quizText = quizEl ? quizEl.textContent : "";
+
+    modalBody.innerHTML = "";
+    if (aiType === "summary") {
+      modalTitle.textContent = "AI Summary";
+      const pre = document.createElement("pre");
+      pre.textContent = sanitizeSummaryText(summaryText);
+      modalBody.appendChild(pre);
+    } else {
+      modalTitle.textContent = "AI Quiz Soal";
+      renderQuizInteractive(quizText, modalBody);
+    }
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+  };
+
+  openButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      openModal(btn.dataset.materialId, btn.dataset.aiType);
+    });
+  });
+
+  closeBtn.addEventListener("click", closeModal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const autoView = params.get("view");
+  const materialId = params.get("material_id");
+  if (materialId && (autoView === "summary" || autoView === "quiz")) {
+    openModal(materialId, autoView);
+  }
+}
+
+setupAiModal();
 
 function setupMaterialFilter() {
   const filter = document.getElementById("materialFilter");

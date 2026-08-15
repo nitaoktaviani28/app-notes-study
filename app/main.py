@@ -482,7 +482,7 @@ def summarize_material(material_id: int, db: Session = Depends(get_db)):
     result = AiResult(material_id=material.id, result_type="summary", content=summary)
     db.add(result)
     db.commit()
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url=f"/?panel=materialsPanel&view=summary&material_id={material.id}", status_code=303)
 
 
 @app.post("/materials/{material_id}/quiz")
@@ -511,7 +511,7 @@ def quiz_material(material_id: int, db: Session = Depends(get_db)):
     result = AiResult(material_id=material.id, result_type="quiz", content=quiz)
     db.add(result)
     db.commit()
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url=f"/?panel=materialsPanel&view=quiz&material_id={material.id}", status_code=303)
 
 
 @app.get("/ai-results/{material_id}")

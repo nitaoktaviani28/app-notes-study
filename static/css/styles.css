@@ -311,32 +311,6 @@ a {
   margin-top: 0.55rem;
 }
 
-.ai-inline-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 0.8rem;
-  margin-top: 0.65rem;
-}
-
-.ai-box {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 0.65rem;
-  background: color-mix(in srgb, var(--card) 94%, transparent);
-}
-
-.ai-box h4 {
-  margin: 0 0 0.45rem;
-  font-family: "Fredoka", sans-serif;
-}
-
-.ai-box pre {
-  margin: 0;
-  font-size: 0.84rem;
-  max-height: 220px;
-  overflow: auto;
-}
-
 .quiz-item {
   border: 1px dashed var(--line-strong);
   border-radius: 10px;
@@ -387,6 +361,66 @@ a {
 .quiz-feedback.wrong {
   background: rgba(201, 58, 76, 0.16);
   border-color: rgba(201, 58, 76, 0.4);
+}
+
+.ai-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 8, 20, 0.62);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+  padding: 1rem;
+}
+
+.ai-modal.open {
+  display: flex;
+}
+
+.ai-modal-card {
+  width: min(980px, 94vw);
+  max-height: 84vh;
+  background: var(--bg-soft);
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.ai-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.8rem 0.95rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.ai-modal-header h3 {
+  margin: 0;
+}
+
+.ai-modal-close {
+  background: #d34a5b;
+  color: #fff;
+  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  line-height: 1;
+}
+
+.ai-modal-body {
+  padding: 0.9rem;
+  overflow: auto;
+  max-height: calc(84vh - 64px);
+}
+
+.ai-modal-body pre {
+  white-space: pre-wrap;
+  line-height: 1.52;
+  margin: 0;
 }
 
 .inline-form {
