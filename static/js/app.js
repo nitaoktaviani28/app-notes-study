@@ -103,7 +103,7 @@ if (calendarEl) {
     height: 650,
     allDaySlot: false,
     expandRows: true,
-    slotMinTime: "06:00:00",
+    slotMinTime: "00:00:00",
     slotMaxTime: "22:00:00",
     nowIndicator: true,
     displayEventTime: true,
@@ -114,6 +114,31 @@ if (calendarEl) {
       left: "prev,next today",
       center: "title",
       right: "timeGridWeek,dayGridMonth"
+    },
+    eventDidMount: (info) => {
+      const location = info.event.extendedProps.location;
+      const note = info.event.extendedProps.note;
+      const extra = [location, note].filter((v) => v && v !== "-").join(" | ");
+      if (extra) {
+        info.el.title = `${info.event.title} | ${extra}`;
+      }
+    },
+    eventContent: (arg) => {
+      const note = arg.event.extendedProps.note;
+      const location = arg.event.extendedProps.location;
+      const pieces = [];
+      if (location && location !== "-") {
+        pieces.push(location);
+      }
+      if (note && note !== "-") {
+        pieces.push(note);
+      }
+      const noteText = pieces.join(" | ");
+      const timeText = arg.timeText ? `<div class=\"fc-event-time-line\">${arg.timeText}</div>` : "";
+      const detailText = noteText ? `<div class=\"fc-event-note-line\">${noteText}</div>` : "";
+      return {
+        html: `<div class=\"fc-event-main-wrap\"><div class=\"fc-event-title-line\">${arg.event.title}</div>${timeText}${detailText}</div>`
+      };
     },
     events: preparedEvents
   });

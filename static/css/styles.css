@@ -441,6 +441,28 @@ pre {
   font-size: 0.75rem;
 }
 
+.fc-event-main-wrap {
+  line-height: 1.2;
+}
+
+.fc-event-title-line {
+  font-weight: 700;
+}
+
+.fc-event-time-line {
+  font-size: 0.72rem;
+  opacity: 0.9;
+}
+
+.fc-event-note-line {
+  font-size: 0.68rem;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
 @keyframes slideIn {
   from {
     transform: translateY(-10px);

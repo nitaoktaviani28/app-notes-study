@@ -233,7 +233,12 @@
       {
         title: "{{ s.course.name|replace('"', '\\"') }}",
         start: "{{ s.schedule_date }}T{{ s.start_time }}:00",
-        end: "{{ s.schedule_date }}T{{ s.end_time or s.start_time }}:00"
+        end: "{{ s.schedule_date }}T{{ s.end_time or s.start_time }}:00",
+        extendedProps: {
+          location: "{{ (s.location or '-')|replace('"', '\\"') }}",
+          note: "{{ (s.note or '-')|replace('"', '\\"') }}",
+          kind: "schedule"
+        }
       },
       {% else %}
       {
@@ -250,7 +255,11 @@
         title: "Routine: {{ r.title|replace('"', '\\"') }}",
         start: "{{ r.routine_date }}T{{ r.reminder_time }}:00",
         durationMinutes: 30,
-        color: "#2d9c7f"
+        color: "#2d9c7f",
+        extendedProps: {
+          note: "{{ (r.note or '-')|replace('"', '\\"') }}",
+          kind: "routine"
+        }
       },
       {% endif %}
       {% endfor %}
