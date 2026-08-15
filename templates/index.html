@@ -12,7 +12,6 @@
 </head>
 <body>
   <div class="bg-layer"></div>
-  <button id="themeToggle" class="theme-toggle" type="button" aria-label="Ganti tema">Dark</button>
   <main class="app-shell">
     <aside class="feature-nav">
       <div class="brand">
@@ -31,6 +30,7 @@
     <section class="content-wrap">
       <section class="panel active" id="dashboardPanel">
         <header class="hero panel-hero">
+          <button id="themeToggle" class="theme-toggle dashboard-only" type="button" aria-label="Ganti tema">Dark</button>
           <h2>Smart planner kuliah</h2>
           <p>Kelola jadwal, nilai, materi, AI, pomodoro, dan daily routine dari satu dashboard.</p>
           <div class="clock-card">
@@ -201,6 +201,7 @@
         <div id="pomodoroTimer">25:00</div>
         <button id="startPomodoro" type="button">Start</button>
       </div>
+      <p id="breakInfo" class="helper-text">Istirahat: 5 menit</p>
       <ul class="list">
         {% for p in pomodoros %}
           <li>{{ p.created_at.strftime('%d %b %H:%M') }} | {{ p.task }} | Fokus {{ p.focus_minutes }}m | Istirahat {{ p.break_minutes }}m</li>

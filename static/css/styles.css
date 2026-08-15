@@ -53,10 +53,10 @@ body {
 }
 
 .theme-toggle {
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  z-index: 30;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
   border: 1px solid var(--line-strong);
   background: var(--card);
   color: var(--ink);
@@ -147,6 +147,8 @@ body {
 
 .panel-hero {
   margin-bottom: 1rem;
+  position: relative;
+  padding-right: 7rem;
 }
 
 .hero h2 {
@@ -338,6 +340,18 @@ a {
   gap: 0.8rem;
 }
 
+#schedulePanel .card + .card {
+  margin-top: 1rem;
+}
+
+#calendar {
+  min-height: 640px;
+}
+
+#breakInfo {
+  margin-top: 0.55rem;
+}
+
 #pomodoroTimer {
   font-size: 2rem;
   font-weight: 700;
@@ -440,9 +454,14 @@ pre {
 }
 
 @media (max-width: 720px) {
+  .panel-hero {
+    padding-right: 0;
+    padding-top: 2.8rem;
+  }
+
   .theme-toggle {
-    top: 8px;
-    right: 10px;
+    top: -4px;
+    right: 0;
   }
 
   .app-shell {

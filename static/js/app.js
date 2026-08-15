@@ -5,6 +5,8 @@ const isHomePage = Boolean(document.querySelector(".app-shell"));
 const savedTheme = localStorage.getItem("complite-theme") || "light";
 const featureButtons = document.querySelectorAll(".feature-btn[data-target]");
 const panels = document.querySelectorAll(".panel");
+const breakInput = document.querySelector("input[name='break_minutes']");
+const breakInfo = document.getElementById("breakInfo");
 
 if (isHomePage) {
   document.body.setAttribute("data-theme", savedTheme);
@@ -35,6 +37,10 @@ function activatePanel(targetId) {
   featureButtons.forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.target === targetId);
   });
+
+  if (themeToggle) {
+    themeToggle.style.display = targetId === "dashboardPanel" ? "inline-block" : "none";
+  }
 
   if (targetId === "schedulePanel" && window.compliteCalendar) {
     window.compliteCalendar.updateSize();
@@ -80,7 +86,7 @@ if (calendarEl) {
     headerToolbar: {
       left: "prev,next today",
       center: "title",
-      right: "timeGridWeek"
+      right: "timeGridWeek,dayGridMonth"
     },
     events: window.calendarItems || []
   });
@@ -113,6 +119,19 @@ if (focusPreset) {
     pomodoroSecs = picked * 60;
     drawPomodoro();
   });
+}
+
+function updateBreakInfo() {
+  if (!breakInfo || !breakInput) {
+    return;
+  }
+  const minutes = Number(breakInput.value || 0);
+  breakInfo.textContent = `Istirahat: ${minutes} menit`;
+}
+
+if (breakInput) {
+  breakInput.addEventListener("input", updateBreakInfo);
+  updateBreakInfo();
 }
 
 if (pomodoroStart) {
