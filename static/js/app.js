@@ -1,7 +1,25 @@
 const clock = document.getElementById("clock");
 const dateText = document.getElementById("dateText");
+const themeToggle = document.getElementById("themeToggle");
+const savedTheme = localStorage.getItem("complite-theme") || "light";
+
+document.body.setAttribute("data-theme", savedTheme);
+
+if (themeToggle) {
+  themeToggle.textContent = savedTheme === "dark" ? "Light" : "Dark";
+  themeToggle.addEventListener("click", () => {
+    const current = document.body.getAttribute("data-theme") || "light";
+    const next = current === "dark" ? "light" : "dark";
+    document.body.setAttribute("data-theme", next);
+    localStorage.setItem("complite-theme", next);
+    themeToggle.textContent = next === "dark" ? "Light" : "Dark";
+  });
+}
 
 function updateClock() {
+  if (!clock || !dateText) {
+    return;
+  }
   const now = new Date();
   clock.textContent = now.toLocaleTimeString("id-ID", { hour12: false });
   dateText.textContent = now.toLocaleDateString("id-ID", {
@@ -12,8 +30,10 @@ function updateClock() {
   });
 }
 
-setInterval(updateClock, 1000);
-updateClock();
+if (clock && dateText) {
+  setInterval(updateClock, 1000);
+  updateClock();
+}
 
 const calendarEl = document.getElementById("calendar");
 if (calendarEl) {
@@ -37,12 +57,17 @@ let pomodoroSecs = 25 * 60;
 let pomodoroInterval;
 
 function drawPomodoro() {
+  if (!pomodoroDisplay) {
+    return;
+  }
   const m = String(Math.floor(pomodoroSecs / 60)).padStart(2, "0");
   const s = String(pomodoroSecs % 60).padStart(2, "0");
   pomodoroDisplay.textContent = `${m}:${s}`;
 }
 
-drawPomodoro();
+if (pomodoroDisplay) {
+  drawPomodoro();
+}
 
 if (pomodoroStart) {
   pomodoroStart.addEventListener("click", () => {
