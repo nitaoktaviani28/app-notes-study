@@ -129,12 +129,20 @@
         <input type="file" name="file" accept=".pdf,.pptx" required />
         <button type="submit">Upload</button>
       </form>
+      {% if materials %}
+      <label class="field-label" for="materialFilter">Pilih materi yang ditampilkan</label>
+      <select id="materialFilter" class="material-filter">
+        <option value="all">Semua materi</option>
+        {% for m in materials %}
+        <option value="{{ m.id }}">{{ m.title }} | {{ m.course.name }}</option>
+        {% endfor %}
+      </select>
+      {% endif %}
       <ul class="list">
         {% for m in materials %}
           {% set latest_summary = latest_summary_by_material.get(m.id) %}
           {% set latest_quiz = latest_quiz_by_material.get(m.id) %}
-          {% set all_ai_results = ai_results_by_material.get(m.id, []) %}
-          <li>
+          <li class="material-item" data-material-id="{{ m.id }}">
             <div class="material-head">
               <span>{{ m.title }} | {{ m.course.name }} | folder: {{ m.folder_name }}</span>
               <div class="material-actions">
@@ -152,9 +160,6 @@
                 <h4>AI Summary</h4>
                 {% if latest_summary %}
                   <pre>{{ latest_summary.content }}</pre>
-                  <form method="post" action="/ai-results/{{ latest_summary.id }}/delete" class="inline-form danger-inline">
-                    <button type="submit" onclick="return confirm('Hapus hasil AI Summary ini?')">Delete Summary</button>
-                  </form>
                 {% else %}
                   <p class="helper-text">Belum ada summary. Klik tombol AI Summary.</p>
                 {% endif %}
@@ -165,25 +170,11 @@
                 {% if latest_quiz %}
                   <div class="quiz-render"></div>
                   <pre class="quiz-fallback" hidden>{{ latest_quiz.content }}</pre>
-                  <form method="post" action="/ai-results/{{ latest_quiz.id }}/delete" class="inline-form danger-inline">
-                    <button type="submit" onclick="return confirm('Hapus hasil AI Quiz ini?')">Delete Quiz</button>
-                  </form>
                 {% else %}
                   <p class="helper-text">Belum ada quiz. Klik tombol AI Quiz Soal.</p>
                 {% endif %}
               </article>
             </div>
-
-            {% if all_ai_results %}
-              <div class="ai-history">
-                <small>Riwayat hasil AI (terbaru di atas):</small>
-                {% for r in all_ai_results %}
-                  <form method="post" action="/ai-results/{{ r.id }}/delete" class="inline-form danger-inline ai-history-delete">
-                    <button type="submit" onclick="return confirm('Hapus hasil AI ini?')">Delete {{ r.result_type }}</button>
-                  </form>
-                {% endfor %}
-              </div>
-            {% endif %}
           </li>
         {% endfor %}
       </ul>

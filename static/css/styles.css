@@ -307,6 +307,10 @@ a {
   align-items: center;
 }
 
+.material-filter {
+  margin-top: 0.55rem;
+}
+
 .ai-inline-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -383,14 +387,6 @@ a {
 .quiz-feedback.wrong {
   background: rgba(201, 58, 76, 0.16);
   border-color: rgba(201, 58, 76, 0.4);
-}
-
-.ai-history {
-  margin-top: 0.45rem;
-}
-
-.ai-history-delete {
-  margin-top: 0.2rem;
 }
 
 .inline-form {

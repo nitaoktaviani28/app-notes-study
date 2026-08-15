@@ -360,3 +360,25 @@ function renderQuizInteractive() {
 }
 
 renderQuizInteractive();
+
+function setupMaterialFilter() {
+  const filter = document.getElementById("materialFilter");
+  const items = document.querySelectorAll(".material-item[data-material-id]");
+  if (!filter || !items.length) {
+    return;
+  }
+
+  const applyFilter = () => {
+    const picked = filter.value;
+    items.forEach((item) => {
+      const materialId = item.dataset.materialId;
+      const visible = picked === "all" || materialId === picked;
+      item.style.display = visible ? "list-item" : "none";
+    });
+  };
+
+  filter.addEventListener("change", applyFilter);
+  applyFilter();
+}
+
+setupMaterialFilter();
