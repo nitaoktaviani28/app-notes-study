@@ -89,15 +89,6 @@ body {
   animation: slideIn 0.5s ease;
 }
 
-.nav-dropdown-label {
-  margin-top: 0.45rem;
-}
-
-.nav-feature-select {
-  width: 100%;
-  font-size: 0.88rem;
-}
-
 .brand {
   padding: 0.35rem 0.3rem 0.7rem;
   border-bottom: 1px dashed var(--line-strong);
