@@ -88,10 +88,8 @@
           <option value="">Pilih Matkul</option>
           {% for c in courses %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
         </select>
-        <select name="day_of_week" required>
-          <option value="mon">Senin</option><option value="tue">Selasa</option><option value="wed">Rabu</option>
-          <option value="thu">Kamis</option><option value="fri">Jumat</option><option value="sat">Sabtu</option><option value="sun">Minggu</option>
-        </select>
+        <label class="field-label" for="scheduleDateInput">Tanggal Kelas</label>
+        <input id="scheduleDateInput" type="date" name="schedule_date" required />
         <label class="field-label" for="startTimeInput">Waktu Mulai</label>
         <input id="startTimeInput" type="time" name="start_time" required />
         <label class="field-label" for="endTimeInput">Waktu Selesai</label>
@@ -102,7 +100,7 @@
       </form>
       <ul class="list">
         {% for s in schedules %}
-          <li>{{ s.day_of_week|upper }} | Mulai {{ s.start_time }} - Selesai {{ s.end_time or '-' }} | {{ s.course.name }} | {{ s.location or '-' }}</li>
+          <li>{{ s.schedule_date or '-' }} ({{ s.day_of_week|upper }}) | Mulai {{ s.start_time }} - Selesai {{ s.end_time or '-' }} | {{ s.course.name }} | {{ s.location or '-' }}</li>
         {% endfor %}
       </ul>
         </section>
@@ -223,12 +221,20 @@
   <script>
     window.calendarItems = [
       {% for s in schedules %}
+      {% if s.schedule_date %}
+      {
+        title: "{{ s.course.name|replace('"', '\\"') }}",
+        start: "{{ s.schedule_date }}T{{ s.start_time }}:00",
+        end: "{{ s.schedule_date }}T{{ s.end_time or s.start_time }}:00"
+      },
+      {% else %}
       {
         title: "{{ s.course.name|replace('"', '\\"') }}",
         daysOfWeek: ["{{ s.day_of_week }}"],
         startTime: "{{ s.start_time }}",
         endTime: "{{ s.end_time or '23:59' }}"
       },
+      {% endif %}
       {% endfor %}
     ];
   </script>

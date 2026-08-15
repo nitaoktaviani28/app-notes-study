@@ -82,6 +82,9 @@ if (calendarEl) {
     slotMinTime: "06:00:00",
     slotMaxTime: "22:00:00",
     nowIndicator: true,
+    displayEventTime: true,
+    eventTimeFormat: { hour: "2-digit", minute: "2-digit", hour12: false },
+    dayMaxEventRows: 3,
     locale: "id",
     headerToolbar: {
       left: "prev,next today",

@@ -10,6 +10,7 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Upload
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from app.ai_service import safe_generate_quiz, safe_summarize
@@ -24,6 +25,21 @@ from app.telegram_service import send_telegram_message
 ensure_folder(settings.storage_dir)
 ensure_folder("./data")
 Base.metadata.create_all(bind=engine)
+
+
+def ensure_schema_updates() -> None:
+    # Keep simple SQLite deployments working even when new columns are introduced.
+    inspector = inspect(engine)
+    if "schedule_items" not in inspector.get_table_names():
+        return
+
+    columns = {col["name"] for col in inspector.get_columns("schedule_items")}
+    if "schedule_date" not in columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE schedule_items ADD COLUMN schedule_date VARCHAR(10)"))
+
+
+ensure_schema_updates()
 
 app = FastAPI(title=settings.app_name)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -41,6 +57,7 @@ def validate_storage_configuration() -> None:
 async def schedule_alert_job() -> None:
     now = datetime.now()
     current_day = now.strftime("%a").lower()
+    current_date = now.strftime("%Y-%m-%d")
     current_time = now.strftime("%H:%M")
 
     def to_hhmm(base: datetime, offset_minutes: int) -> str:
@@ -58,7 +75,10 @@ async def schedule_alert_job() -> None:
     try:
         classes = db.query(ScheduleItem).join(Course).all()
         for item in classes:
-            if item.day_of_week.lower() != current_day:
+            is_today_by_date = bool(item.schedule_date and item.schedule_date == current_date)
+            is_today_by_day = item.day_of_week.lower() == current_day
+
+            if not is_today_by_date and not is_today_by_day:
                 continue
 
             if item.start_time == reminder_targets[-10]:
@@ -144,16 +164,23 @@ def delete_course(course_id: int, db: Session = Depends(get_db)):
 @app.post("/schedules")
 def create_schedule(
     course_id: int = Form(...),
-    day_of_week: str = Form(...),
+    schedule_date: str = Form(...),
     start_time: str = Form(...),
     end_time: str = Form(default=""),
     location: str = Form(default=""),
     note: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
+    try:
+        parsed_date = datetime.strptime(schedule_date.strip(), "%Y-%m-%d")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Format tanggal harus YYYY-MM-DD") from exc
+    day_of_week = parsed_date.strftime("%a").lower()
+
     payload = ScheduleCreate(
         course_id=course_id,
-        day_of_week=day_of_week.strip().lower(),
+        day_of_week=day_of_week,
+        schedule_date=schedule_date.strip(),
         start_time=start_time.strip(),
         end_time=end_time.strip() or None,
         location=location.strip() or None,

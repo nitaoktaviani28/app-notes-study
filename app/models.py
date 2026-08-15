@@ -25,6 +25,7 @@ class ScheduleItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
     day_of_week = Column(String(20), nullable=False)
+    schedule_date = Column(String(10), nullable=True)
     start_time = Column(String(10), nullable=False)
     end_time = Column(String(10), nullable=True)
     location = Column(String(200), nullable=True)

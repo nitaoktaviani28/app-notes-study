@@ -9,6 +9,7 @@ class CourseCreate(BaseModel):
 class ScheduleCreate(BaseModel):
     course_id: int
     day_of_week: str
+    schedule_date: str | None = None
     start_time: str
     end_time: str | None = None
     location: str | None = None
