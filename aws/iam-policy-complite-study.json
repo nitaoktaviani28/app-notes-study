@@ -1,0 +1,39 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3ListBucketForPrefix",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::s3-study-complete",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "complite-study/materials/*"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "S3ReadWriteObjects",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::s3-study-complete/complite-study/materials/*"
+    },
+    {
+      "Sid": "BedrockInvokeNova",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": "arn:aws:bedrock:ap-southeast-1::foundation-model/amazon.nova-lite-v1:0"
+    }
+  ]
+}

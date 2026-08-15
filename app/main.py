@@ -1,0 +1,331 @@
+from __future__ import annotations
+
+import os
+import uuid
+from datetime import datetime
+from pathlib import Path
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+
+from app.ai_service import safe_generate_quiz, safe_summarize
+from app.config import settings
+from app.database import Base, engine, get_db
+from app.file_service import ensure_folder, extract_text_from_material
+from app.models import AiResult, Course, Grade, Material, PomodoroSession, Routine, ScheduleItem
+from app.s3_service import s3_is_enabled, s3_storage, safe_create_presigned_url, safe_download_to_temp
+from app.schemas import CourseCreate, GradeCreate, PomodoroCreate, RoutineCreate, ScheduleCreate
+from app.telegram_service import send_telegram_message
+
+Base.metadata.create_all(bind=engine)
+ensure_folder(settings.storage_dir)
+ensure_folder("./data")
+
+app = FastAPI(title=settings.app_name)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+scheduler = AsyncIOScheduler()
+
+
+def validate_storage_configuration() -> None:
+    if settings.storage_backend.lower() != "s3":
+        raise RuntimeError("STORAGE_BACKEND harus bernilai 's3' untuk mode ini")
+    if not settings.s3_bucket:
+        raise RuntimeError("S3_BUCKET belum diisi")
+
+
+async def schedule_alert_job() -> None:
+    now = datetime.now()
+    current_day = now.strftime("%a").lower()
+    current_time = now.strftime("%H:%M")
+
+    from app.database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        classes = db.query(ScheduleItem).join(Course).all()
+        for item in classes:
+            if item.day_of_week.lower() == current_day and item.start_time == current_time:
+                msg = f"[Kuliah Alert] {item.course.name} mulai {item.start_time} di {item.location or '-'}"
+                await send_telegram_message(msg)
+
+        routines = db.query(Routine).all()
+        for routine in routines:
+            if routine.day_of_week.lower() == current_day and routine.reminder_time == current_time:
+                msg = f"[Routine Alert] {routine.title} jam {routine.reminder_time}\nCatatan: {routine.note or '-'}"
+                await send_telegram_message(msg)
+    finally:
+        db.close()
+
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    validate_storage_configuration()
+    if not scheduler.running:
+        scheduler.add_job(schedule_alert_job, "cron", minute="*")
+        scheduler.start()
+
+
+@app.on_event("shutdown")
+async def on_shutdown() -> None:
+    if scheduler.running:
+        scheduler.shutdown()
+
+
+@app.get("/")
+def dashboard(request: Request, db: Session = Depends(get_db)):
+    courses = db.query(Course).order_by(Course.name).all()
+    schedules = db.query(ScheduleItem).join(Course).all()
+    materials = db.query(Material).join(Course).order_by(Material.uploaded_at.desc()).all()
+    grades = db.query(Grade).join(Course).order_by(Grade.semester.asc()).all()
+    routines = db.query(Routine).all()
+    pomodoros = db.query(PomodoroSession).order_by(PomodoroSession.created_at.desc()).limit(10).all()
+
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "courses": courses,
+            "schedules": schedules,
+            "materials": materials,
+            "grades": grades,
+            "routines": routines,
+            "pomodoros": pomodoros,
+        },
+    )
+
+
+@app.post("/courses")
+def create_course(name: str = Form(...), code: str = Form(default=""), db: Session = Depends(get_db)):
+    payload = CourseCreate(name=name.strip(), code=code.strip() or None)
+    exists = db.query(Course).filter(Course.name == payload.name).first()
+    if exists:
+        return RedirectResponse(url="/", status_code=303)
+
+    course = Course(name=payload.name, code=payload.code)
+    db.add(course)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/schedules")
+def create_schedule(
+    course_id: int = Form(...),
+    day_of_week: str = Form(...),
+    start_time: str = Form(...),
+    end_time: str = Form(default=""),
+    location: str = Form(default=""),
+    note: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    payload = ScheduleCreate(
+        course_id=course_id,
+        day_of_week=day_of_week.strip().lower(),
+        start_time=start_time.strip(),
+        end_time=end_time.strip() or None,
+        location=location.strip() or None,
+        note=note.strip() or None,
+    )
+    item = ScheduleItem(**payload.model_dump())
+    db.add(item)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/grades")
+def create_grade(
+    course_id: int = Form(...),
+    semester: int = Form(...),
+    score: float = Form(...),
+    weight: float = Form(default=0),
+    note: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    payload = GradeCreate(
+        course_id=course_id,
+        semester=semester,
+        score=score,
+        weight=weight if weight > 0 else None,
+        note=note.strip() or None,
+    )
+    grade = Grade(**payload.model_dump())
+    db.add(grade)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/routines")
+def create_routine(
+    title: str = Form(...),
+    day_of_week: str = Form(...),
+    reminder_time: str = Form(...),
+    note: str = Form(default=""),
+    db: Session = Depends(get_db),
+):
+    payload = RoutineCreate(
+        title=title.strip(),
+        day_of_week=day_of_week.strip().lower(),
+        reminder_time=reminder_time.strip(),
+        note=note.strip() or None,
+    )
+    routine = Routine(**payload.model_dump())
+    db.add(routine)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/pomodoro")
+def create_pomodoro(
+    task: str = Form(...),
+    focus_minutes: int = Form(...),
+    break_minutes: int = Form(...),
+    cycles: int = Form(...),
+    db: Session = Depends(get_db),
+):
+    payload = PomodoroCreate(
+        task=task,
+        focus_minutes=focus_minutes,
+        break_minutes=break_minutes,
+        cycles=cycles,
+    )
+    session = PomodoroSession(**payload.model_dump())
+    db.add(session)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/materials")
+async def upload_material(
+    course_id: int = Form(...),
+    title: str = Form(...),
+    folder_name: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in {".pdf", ".pptx"}:
+        raise HTTPException(status_code=400, detail="Only PDF and PPTX are supported")
+
+    safe_folder = "".join(ch for ch in folder_name if ch.isalnum() or ch in {"-", "_"})
+    if not safe_folder:
+        safe_folder = "general"
+
+    new_name = f"{uuid.uuid4().hex}{ext}"
+    content = await file.read()
+    content_type = "application/pdf" if ext == ".pdf" else "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+
+    if not s3_is_enabled():
+        raise HTTPException(status_code=500, detail="S3 belum aktif atau konfigurasi belum lengkap")
+
+    s3_key = f"{settings.s3_prefix.strip('/')}/{safe_folder}/{new_name}"
+    s3_storage.upload_bytes(content=content, key=s3_key, content_type=content_type)
+    file_path = f"s3://{settings.s3_bucket}/{s3_key}"
+    web_path = s3_key
+
+    material = Material(
+        course_id=course_id,
+        title=title,
+        folder_name=safe_folder,
+        file_name=file.filename or new_name,
+        file_path=file_path,
+        web_path=web_path,
+    )
+    db.add(material)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.get("/materials/{material_id}/open")
+def open_material(material_id: int, db: Session = Depends(get_db)):
+    material = db.query(Material).filter(Material.id == material_id).first()
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found")
+
+    signed_url = safe_create_presigned_url(material.web_path, expires_seconds=3600)
+    if not signed_url:
+        raise HTTPException(status_code=500, detail="Failed to create S3 access URL")
+    return RedirectResponse(url=signed_url, status_code=302)
+
+
+@app.post("/materials/{material_id}/summarize")
+def summarize_material(material_id: int, db: Session = Depends(get_db)):
+    material = db.query(Material).filter(Material.id == material_id).first()
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found")
+
+    ext = Path(material.file_name).suffix.lower()
+    read_path = material.file_path
+    temp_path = None
+
+    if not s3_is_enabled():
+        raise HTTPException(status_code=500, detail="S3 belum aktif atau konfigurasi belum lengkap")
+
+    temp_path = safe_download_to_temp(material.web_path, suffix=ext)
+    if not temp_path:
+        raise HTTPException(status_code=500, detail="Failed to download S3 file")
+    read_path = temp_path
+
+    text = extract_text_from_material(read_path)
+    if temp_path and os.path.exists(temp_path):
+        os.remove(temp_path)
+
+    summary = safe_summarize(text or "Materi kosong")
+    result = AiResult(material_id=material.id, result_type="summary", content=summary)
+    db.add(result)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/materials/{material_id}/quiz")
+def quiz_material(material_id: int, db: Session = Depends(get_db)):
+    material = db.query(Material).filter(Material.id == material_id).first()
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found")
+
+    ext = Path(material.file_name).suffix.lower()
+    read_path = material.file_path
+    temp_path = None
+
+    if not s3_is_enabled():
+        raise HTTPException(status_code=500, detail="S3 belum aktif atau konfigurasi belum lengkap")
+
+    temp_path = safe_download_to_temp(material.web_path, suffix=ext)
+    if not temp_path:
+        raise HTTPException(status_code=500, detail="Failed to download S3 file")
+    read_path = temp_path
+
+    text = extract_text_from_material(read_path)
+    if temp_path and os.path.exists(temp_path):
+        os.remove(temp_path)
+
+    quiz = safe_generate_quiz(text or "Materi kosong")
+    result = AiResult(material_id=material.id, result_type="quiz", content=quiz)
+    db.add(result)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.get("/ai-results/{material_id}")
+def material_results(request: Request, material_id: int, db: Session = Depends(get_db)):
+    material = db.query(Material).filter(Material.id == material_id).first()
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found")
+
+    results = db.query(AiResult).filter(AiResult.material_id == material_id).order_by(AiResult.created_at.desc()).all()
+    return templates.TemplateResponse(
+        "ai_results.html",
+        {"request": request, "material": material, "results": results},
+    )
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}

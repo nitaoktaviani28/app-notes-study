@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Result - complite study</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <main class="result-page">
+    <a href="/" class="back-link">Kembali</a>
+    <h1>Hasil AI - {{ material.title }}</h1>
+    {% for r in results %}
+      <section class="result-card">
+        <h2>{{ r.result_type|upper }} - {{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</h2>
+        <pre>{{ r.content }}</pre>
+      </section>
+    {% endfor %}
+  </main>
+</body>
+</html>

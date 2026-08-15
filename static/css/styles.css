@@ -1,0 +1,202 @@
+:root {
+  --cream: #f7f1e3;
+  --coral: #ff7f5c;
+  --mint: #7cd4b8;
+  --ink: #1e293b;
+  --deep: #0f172a;
+  --card: rgba(255, 255, 255, 0.88);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Manrope", sans-serif;
+  background: radial-gradient(circle at 20% 10%, #ffe8c2, transparent 30%),
+    radial-gradient(circle at 80% 25%, #e0ffef, transparent 35%),
+    linear-gradient(150deg, #fef8ee 0%, #f8fbff 100%);
+  min-height: 100vh;
+}
+
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(transparent 95%, rgba(255, 255, 255, 0.3) 96%);
+  background-size: 100% 24px;
+  pointer-events: none;
+}
+
+.hero {
+  padding: 2rem 1.2rem 1rem;
+  text-align: center;
+  animation: slideIn 0.6s ease;
+}
+
+.hero h1 {
+  font-family: "Fraunces", serif;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  margin: 0;
+  color: var(--deep);
+}
+
+.hero p {
+  margin: 0.6rem auto;
+  max-width: 720px;
+}
+
+.clock-card {
+  margin: 1rem auto 0;
+  max-width: 260px;
+  background: var(--card);
+  padding: 0.8rem;
+  border-radius: 16px;
+  border: 1px solid #ffffff;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
+#clock {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.grid {
+  width: min(1280px, 95%);
+  margin: 0 auto 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+}
+
+.card.wide {
+  grid-column: 1 / -1;
+}
+
+h2 {
+  margin-top: 0;
+  font-family: "Fraunces", serif;
+}
+
+.form {
+  display: grid;
+  gap: 0.55rem;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  border-radius: 10px;
+  border: 1px solid #dbe4ef;
+  padding: 0.58rem 0.66rem;
+}
+
+textarea {
+  min-height: 70px;
+}
+
+button {
+  border: none;
+  background: linear-gradient(135deg, var(--coral), #ff996e);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.06);
+}
+
+.list {
+  margin: 0.8rem 0 0;
+  padding-left: 1rem;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.inline-form {
+  display: inline;
+}
+
+.inline-form button {
+  margin-left: 0.35rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.chips {
+  margin-top: 0.7rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chips span {
+  background: #fff;
+  border: 1px solid #ebeff5;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+}
+
+.timer-wrap {
+  margin-top: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+#pomodoroTimer {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--deep);
+}
+
+.result-page {
+  width: min(1000px, 92%);
+  margin: 2rem auto;
+}
+
+.result-card {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 14px;
+  background: #fff;
+}
+
+pre {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

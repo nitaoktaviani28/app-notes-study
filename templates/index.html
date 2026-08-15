@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>complite study</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="bg-layer"></div>
+  <header class="hero">
+    <h1>complite study</h1>
+    <p>Smart planner kuliah: jadwal, nilai, materi, AI, pomodoro, dan daily routine.</p>
+    <div class="clock-card">
+      <span id="clock"></span>
+      <small id="dateText"></small>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <h2>Tambah Mata Kuliah</h2>
+      <form method="post" action="/courses" class="form">
+        <input name="name" placeholder="Nama Matkul" required />
+        <input name="code" placeholder="Kode Matkul" />
+        <button type="submit">Simpan Matkul</button>
+      </form>
+      <div class="chips">
+        {% for c in courses %}
+          <span>{{ c.name }}{% if c.code %} ({{ c.code }}){% endif %}</span>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Jadwal Kuliah + Alert Telegram</h2>
+      <form method="post" action="/schedules" class="form">
+        <select name="course_id" required>
+          <option value="">Pilih Matkul</option>
+          {% for c in courses %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+        </select>
+        <select name="day_of_week" required>
+          <option value="mon">Senin</option><option value="tue">Selasa</option><option value="wed">Rabu</option>
+          <option value="thu">Kamis</option><option value="fri">Jumat</option><option value="sat">Sabtu</option><option value="sun">Minggu</option>
+        </select>
+        <input type="time" name="start_time" required />
+        <input type="time" name="end_time" />
+        <input name="location" placeholder="Lokasi" />
+        <textarea name="note" placeholder="Catatan"></textarea>
+        <button type="submit">Tambah Jadwal</button>
+      </form>
+      <ul class="list">
+        {% for s in schedules %}
+          <li>{{ s.day_of_week|upper }} | {{ s.start_time }} - {{ s.end_time or '-' }} | {{ s.course.name }} | {{ s.location or '-' }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="card wide">
+      <h2>Kalender Kuliah</h2>
+      <div id="calendar"></div>
+    </section>
+
+    <section class="card">
+      <h2>Upload Materi (PDF/PPTX)</h2>
+      <form method="post" action="/materials" enctype="multipart/form-data" class="form">
+        <select name="course_id" required>
+          <option value="">Pilih Matkul</option>
+          {% for c in courses %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+        </select>
+        <input name="title" placeholder="Judul Materi" required />
+        <input name="folder_name" placeholder="Folder Matkul (contoh: basis_data)" required />
+        <input type="file" name="file" accept=".pdf,.pptx" required />
+        <button type="submit">Upload</button>
+      </form>
+      <ul class="list">
+        {% for m in materials %}
+          <li>
+            {{ m.title }} | {{ m.course.name }} | folder: {{ m.folder_name }}
+            <a href="/materials/{{ m.id }}/open" target="_blank">Buka</a>
+            <a href="/ai-results/{{ m.id }}">Lihat AI</a>
+            <form method="post" action="/materials/{{ m.id }}/summarize" class="inline-form"><button>AI Summary</button></form>
+            <form method="post" action="/materials/{{ m.id }}/quiz" class="inline-form"><button>AI Quiz</button></form>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Nilai Tracker</h2>
+      <form method="post" action="/grades" class="form">
+        <select name="course_id" required>
+          <option value="">Pilih Matkul</option>
+          {% for c in courses %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+        </select>
+        <input type="number" name="semester" min="1" placeholder="Semester" required />
+        <input type="number" name="score" step="0.01" min="0" max="100" placeholder="Nilai" required />
+        <input type="number" name="weight" step="0.01" min="0" placeholder="Bobot opsional" />
+        <textarea name="note" placeholder="Catatan"></textarea>
+        <button type="submit">Simpan Nilai</button>
+      </form>
+      <ul class="list">
+        {% for g in grades %}
+          <li>Semester {{ g.semester }} | {{ g.course.name }} | Nilai {{ g.score }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Daily Routine + Telegram Alert</h2>
+      <form method="post" action="/routines" class="form">
+        <input name="title" placeholder="Judul Routine" required />
+        <select name="day_of_week" required>
+          <option value="mon">Senin</option><option value="tue">Selasa</option><option value="wed">Rabu</option>
+          <option value="thu">Kamis</option><option value="fri">Jumat</option><option value="sat">Sabtu</option><option value="sun">Minggu</option>
+        </select>
+        <input type="time" name="reminder_time" required />
+        <textarea name="note" placeholder="Catatan activity"></textarea>
+        <button type="submit">Tambah Routine</button>
+      </form>
+      <ul class="list">
+        {% for r in routines %}
+          <li>{{ r.day_of_week|upper }} {{ r.reminder_time }} | {{ r.title }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Pomodoro Belajar</h2>
+      <form method="post" action="/pomodoro" class="form">
+        <input name="task" placeholder="Task belajar" required />
+        <input type="number" name="focus_minutes" value="25" min="1" required />
+        <input type="number" name="break_minutes" value="5" min="1" required />
+        <input type="number" name="cycles" value="4" min="1" required />
+        <button type="submit">Simpan Session</button>
+      </form>
+      <div class="timer-wrap">
+        <div id="pomodoroTimer">25:00</div>
+        <button id="startPomodoro" type="button">Start</button>
+      </div>
+      <ul class="list">
+        {% for p in pomodoros %}
+          <li>{{ p.task }} | {{ p.focus_minutes }}m / {{ p.break_minutes }}m x {{ p.cycles }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    window.calendarItems = [
+      {% for s in schedules %}
+      {
+        title: "{{ s.course.name|replace('"', '\\"') }}",
+        daysOfWeek: ["{{ s.day_of_week }}"],
+        startTime: "{{ s.start_time }}",
+        endTime: "{{ s.end_time or '23:59' }}"
+      },
+      {% endfor %}
+    ];
+  </script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
