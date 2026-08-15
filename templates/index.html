@@ -133,10 +133,10 @@
         {% for m in materials %}
           <li>
             {{ m.title }} | {{ m.course.name }} | folder: {{ m.folder_name }}
-            <a href="/materials/{{ m.id }}/open" target="_blank">Buka</a>
-            <a href="/ai-results/{{ m.id }}">Lihat AI</a>
+            <a href="/materials/{{ m.id }}/open" target="_blank">Buka Dokumen</a>
+            <a href="/ai-results/{{ m.id }}">Lihat Hasil AI</a>
             <form method="post" action="/materials/{{ m.id }}/summarize" class="inline-form"><button>AI Summary</button></form>
-            <form method="post" action="/materials/{{ m.id }}/quiz" class="inline-form"><button>AI Quiz</button></form>
+            <form method="post" action="/materials/{{ m.id }}/quiz" class="inline-form"><button>AI Quiz Soal</button></form>
           </li>
         {% endfor %}
       </ul>
