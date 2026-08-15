@@ -443,6 +443,7 @@ pre {
 
 .fc-event-main-wrap {
   line-height: 1.2;
+  padding: 1px 2px;
 }
 
 .fc-event-title-line {
@@ -452,6 +453,7 @@ pre {
 .fc-event-time-line {
   font-size: 0.72rem;
   opacity: 0.9;
+  margin-top: 1px;
 }
 
 .fc-event-note-line {
@@ -461,6 +463,11 @@ pre {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 180px;
+  margin-top: 1px;
+}
+
+.fc .fc-timegrid-event-harness {
+  margin-right: 2px;
 }
 
 @keyframes slideIn {
