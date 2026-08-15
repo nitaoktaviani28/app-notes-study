@@ -5,6 +5,7 @@ const isHomePage = Boolean(document.querySelector(".app-shell"));
 const savedTheme = localStorage.getItem("complite-theme") || "light";
 const featureButtons = document.querySelectorAll(".feature-btn[data-target]");
 const panels = document.querySelectorAll(".panel");
+const PANEL_KEY = "complite-last-panel";
 const breakInput = document.querySelector("input[name='break_minutes']");
 const breakInfo = document.getElementById("breakInfo");
 
@@ -45,11 +46,28 @@ function activatePanel(targetId) {
   if (targetId === "schedulePanel" && window.compliteCalendar) {
     window.compliteCalendar.updateSize();
   }
+
+  localStorage.setItem(PANEL_KEY, targetId);
 }
 
 featureButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     activatePanel(btn.dataset.target);
+  });
+});
+
+const currentParams = new URLSearchParams(window.location.search);
+const panelFromQuery = currentParams.get("panel");
+const savedPanel = localStorage.getItem(PANEL_KEY);
+const initialPanel = panelFromQuery || savedPanel || "dashboardPanel";
+activatePanel(initialPanel);
+
+document.querySelectorAll(".panel form").forEach((form) => {
+  form.addEventListener("submit", () => {
+    const parentPanel = form.closest(".panel");
+    if (parentPanel?.id) {
+      localStorage.setItem(PANEL_KEY, parentPanel.id);
+    }
   });
 });
 
@@ -105,10 +123,10 @@ if (calendarEl) {
     expandRows: true,
     slotMinTime: "00:00:00",
     slotMaxTime: "23:30:00",
-    slotDuration: "00:30:00",
-    slotLabelInterval: "01:00",
-    eventMinHeight: 34,
-    eventShortHeight: 28,
+    slotDuration: "00:15:00",
+    slotLabelInterval: "00:30:00",
+    eventMinHeight: 18,
+    eventShortHeight: 16,
     nowIndicator: true,
     displayEventTime: true,
     eventTimeFormat: { hour: "2-digit", minute: "2-digit", hour12: false },

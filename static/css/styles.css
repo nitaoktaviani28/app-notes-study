@@ -460,6 +460,10 @@ pre {
   font-size: 0.78rem;
 }
 
+.fc .fc-timegrid-slot-label {
+  font-size: 0.7rem;
+}
+
 .fc .fc-day-sun .fc-col-header-cell-cushion,
 .fc .fc-day-sun .fc-daygrid-day-number,
 .fc .fc-day-sun .fc-timegrid-col-frame {
