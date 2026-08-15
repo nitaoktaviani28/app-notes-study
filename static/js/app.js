@@ -74,6 +74,30 @@ if (clock && dateText) {
 
 const calendarEl = document.getElementById("calendar");
 if (calendarEl) {
+  const addMinutesToLocalIso = (startIso, extraMinutes) => {
+    const [datePart, timePart] = startIso.split("T");
+    if (!datePart || !timePart) {
+      return startIso;
+    }
+    const [hourRaw, minuteRaw] = timePart.split(":");
+    const baseMinutes = Number(hourRaw) * 60 + Number(minuteRaw);
+    const totalMinutes = baseMinutes + Number(extraMinutes || 0);
+    const safeMinutes = totalMinutes < 0 ? 0 : totalMinutes;
+    const newHour = String(Math.floor((safeMinutes % (24 * 60)) / 60)).padStart(2, "0");
+    const newMinute = String(safeMinutes % 60).padStart(2, "0");
+    return `${datePart}T${newHour}:${newMinute}:00`;
+  };
+
+  const preparedEvents = (window.calendarItems || []).map((event) => {
+    if (event.start && !event.end && event.durationMinutes) {
+      return {
+        ...event,
+        end: addMinutesToLocalIso(event.start, event.durationMinutes)
+      };
+    }
+    return event;
+  });
+
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "timeGridWeek",
     height: 650,
@@ -91,7 +115,7 @@ if (calendarEl) {
       center: "title",
       right: "timeGridWeek,dayGridMonth"
     },
-    events: window.calendarItems || []
+    events: preparedEvents
   });
   calendar.render();
   window.compliteCalendar = calendar;

@@ -333,6 +333,16 @@ a {
   background: #c93a4c;
 }
 
+.conflict-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  background: #ffe1e1;
+  color: #b53232;
+}
+
 .timer-wrap {
   margin-top: 0.8rem;
   display: flex;

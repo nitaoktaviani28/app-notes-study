@@ -27,6 +27,7 @@ class GradeCreate(BaseModel):
 class RoutineCreate(BaseModel):
     title: str
     day_of_week: str
+    routine_date: str | None = None
     reminder_time: str
     note: str | None = None
 

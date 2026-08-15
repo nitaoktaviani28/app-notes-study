@@ -39,6 +39,11 @@ def ensure_schema_updates() -> None:
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE schedule_items ADD COLUMN schedule_date VARCHAR(10)"))
 
+    routine_columns = {col["name"] for col in inspector.get_columns("routines")}
+    if "routine_date" not in routine_columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE routines ADD COLUMN routine_date VARCHAR(10)"))
+
 
 ensure_schema_updates()
 
@@ -59,6 +64,58 @@ def validate_storage_configuration() -> None:
         raise RuntimeError("STORAGE_BACKEND harus bernilai 's3' untuk mode ini")
     if not settings.s3_bucket:
         raise RuntimeError("S3_BUCKET belum diisi")
+
+
+def hhmm_to_minutes(value: str) -> int:
+    hour, minute = value.split(":")
+    return int(hour) * 60 + int(minute)
+
+
+def has_schedule_conflict(db: Session, schedule_date: str, start_time: str, end_time: str | None) -> bool:
+    start_min = hhmm_to_minutes(start_time)
+    end_min = hhmm_to_minutes(end_time or start_time)
+    if end_min < start_min:
+        end_min = start_min
+
+    schedules = db.query(ScheduleItem).filter(ScheduleItem.schedule_date == schedule_date).all()
+    for existing in schedules:
+        existing_start = hhmm_to_minutes(existing.start_time)
+        existing_end = hhmm_to_minutes(existing.end_time or existing.start_time)
+        if existing_end < existing_start:
+            existing_end = existing_start
+        if start_min <= existing_end and existing_start <= end_min:
+            return True
+
+    routines = db.query(Routine).filter(Routine.routine_date == schedule_date).all()
+    for routine in routines:
+        routine_min = hhmm_to_minutes(routine.reminder_time)
+        if start_min <= routine_min <= end_min:
+            return True
+
+    return False
+
+
+def has_routine_conflict(db: Session, routine_date: str, reminder_time: str) -> bool:
+    reminder_min = hhmm_to_minutes(reminder_time)
+
+    routine_hit = (
+        db.query(Routine)
+        .filter(Routine.routine_date == routine_date, Routine.reminder_time == reminder_time)
+        .first()
+    )
+    if routine_hit:
+        return True
+
+    schedules = db.query(ScheduleItem).filter(ScheduleItem.schedule_date == routine_date).all()
+    for schedule in schedules:
+        start_min = hhmm_to_minutes(schedule.start_time)
+        end_min = hhmm_to_minutes(schedule.end_time or schedule.start_time)
+        if end_min < start_min:
+            end_min = start_min
+        if start_min <= reminder_min <= end_min:
+            return True
+
+    return False
 
 
 async def schedule_alert_job() -> None:
@@ -100,7 +157,9 @@ async def schedule_alert_job() -> None:
 
         routines = db.query(Routine).all()
         for routine in routines:
-            if routine.day_of_week.lower() == current_day and routine.reminder_time == current_time:
+            is_today_by_date = bool(routine.routine_date and routine.routine_date == current_date)
+            is_today_by_day = routine.day_of_week.lower() == current_day
+            if (is_today_by_date or is_today_by_day) and routine.reminder_time == current_time:
                 msg = f"[Routine Alert] {routine.title} jam {routine.reminder_time}\nCatatan: {routine.note or '-'}"
                 await send_telegram_message(msg)
     finally:
@@ -193,8 +252,23 @@ def create_schedule(
         location=location.strip() or None,
         note=note.strip() or None,
     )
+    if payload.schedule_date and has_schedule_conflict(db, payload.schedule_date, payload.start_time, payload.end_time):
+        conflict_note = "[CONFLICT] bentrok dengan jadwal/routine lain"
+        payload.note = f"{conflict_note} | {payload.note}" if payload.note else conflict_note
+
     item = ScheduleItem(**payload.model_dump())
     db.add(item)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/schedules/{schedule_id}/delete")
+def delete_schedule(schedule_id: int, db: Session = Depends(get_db)):
+    item = db.query(ScheduleItem).filter(ScheduleItem.id == schedule_id).first()
+    if not item:
+        return RedirectResponse(url="/", status_code=303)
+
+    db.delete(item)
     db.commit()
     return RedirectResponse(url="/", status_code=303)
 
@@ -224,17 +298,28 @@ def create_grade(
 @app.post("/routines")
 def create_routine(
     title: str = Form(...),
-    day_of_week: str = Form(...),
+    routine_date: str = Form(...),
     reminder_time: str = Form(...),
     note: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
+    try:
+        parsed_date = datetime.strptime(routine_date.strip(), "%Y-%m-%d")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Format tanggal routine harus YYYY-MM-DD") from exc
+
+    day_of_week = parsed_date.strftime("%a").lower()
     payload = RoutineCreate(
         title=title.strip(),
-        day_of_week=day_of_week.strip().lower(),
+        day_of_week=day_of_week,
+        routine_date=routine_date.strip(),
         reminder_time=reminder_time.strip(),
         note=note.strip() or None,
     )
+    if payload.routine_date and has_routine_conflict(db, payload.routine_date, payload.reminder_time):
+        conflict_note = "[CONFLICT] bentrok dengan jadwal/routine lain"
+        payload.note = f"{conflict_note} | {payload.note}" if payload.note else conflict_note
+
     routine = Routine(**payload.model_dump())
     db.add(routine)
     db.commit()

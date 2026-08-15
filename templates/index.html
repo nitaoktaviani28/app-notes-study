@@ -100,7 +100,13 @@
       </form>
       <ul class="list">
         {% for s in schedules %}
-          <li>{{ s.schedule_date or '-' }} ({{ s.day_of_week|upper }}) | Mulai {{ s.start_time }} - Selesai {{ s.end_time or '-' }} | {{ s.course.name }} | {{ s.location or '-' }}</li>
+          <li>
+            {{ s.schedule_date or '-' }} ({{ s.day_of_week|upper }}) | Mulai {{ s.start_time }} - Selesai {{ s.end_time or '-' }} | {{ s.course.name }} | {{ s.location or '-' }}
+            {% if s.note and '[CONFLICT]' in s.note %}<strong class="conflict-tag">CONFLICT</strong>{% endif %}
+            <form method="post" action="/schedules/{{ s.id }}/delete" class="inline-form danger-inline">
+              <button type="submit" onclick="return confirm('Hapus jadwal ini?')">Hapus</button>
+            </form>
+          </li>
         {% endfor %}
       </ul>
         </section>
@@ -164,17 +170,19 @@
           <h2>Daily Routine + Telegram Alert</h2>
       <form method="post" action="/routines" class="form">
         <input name="title" placeholder="Judul Routine" required />
-        <select name="day_of_week" required>
-          <option value="mon">Senin</option><option value="tue">Selasa</option><option value="wed">Rabu</option>
-          <option value="thu">Kamis</option><option value="fri">Jumat</option><option value="sat">Sabtu</option><option value="sun">Minggu</option>
-        </select>
-        <input type="time" name="reminder_time" required />
+        <label class="field-label" for="routineDateInput">Tanggal Routine</label>
+        <input id="routineDateInput" type="date" name="routine_date" required />
+        <label class="field-label" for="routineTimeInput">Jam Routine</label>
+        <input id="routineTimeInput" type="time" name="reminder_time" required />
         <textarea name="note" placeholder="Catatan activity"></textarea>
         <button type="submit">Tambah Routine</button>
       </form>
       <ul class="list">
         {% for r in routines %}
-          <li>{{ r.day_of_week|upper }} {{ r.reminder_time }} | {{ r.title }}</li>
+          <li>
+            {{ r.routine_date or '-' }} ({{ r.day_of_week|upper }}) {{ r.reminder_time }} | {{ r.title }}
+            {% if r.note and '[CONFLICT]' in r.note %}<strong class="conflict-tag">CONFLICT</strong>{% endif %}
+          </li>
         {% endfor %}
       </ul>
         </section>
@@ -233,6 +241,16 @@
         daysOfWeek: ["{{ s.day_of_week }}"],
         startTime: "{{ s.start_time }}",
         endTime: "{{ s.end_time or '23:59' }}"
+      },
+      {% endif %}
+      {% endfor %}
+      {% for r in routines %}
+      {% if r.routine_date %}
+      {
+        title: "Routine: {{ r.title|replace('"', '\\"') }}",
+        start: "{{ r.routine_date }}T{{ r.reminder_time }}:00",
+        durationMinutes: 30,
+        color: "#2d9c7f"
       },
       {% endif %}
       {% endfor %}

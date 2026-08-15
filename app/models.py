@@ -68,6 +68,7 @@ class Routine(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
     day_of_week = Column(String(20), nullable=False)
+    routine_date = Column(String(10), nullable=True)
     reminder_time = Column(String(10), nullable=False)
     note = Column(Text, nullable=True)
 
