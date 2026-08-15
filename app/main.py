@@ -191,6 +191,18 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     grades = db.query(Grade).join(Course).order_by(Grade.semester.asc()).all()
     routines = db.query(Routine).all()
     pomodoros = db.query(PomodoroSession).order_by(PomodoroSession.created_at.desc()).limit(10).all()
+    ai_results = db.query(AiResult).order_by(AiResult.created_at.desc()).all()
+
+    latest_summary_by_material: dict[int, AiResult] = {}
+    latest_quiz_by_material: dict[int, AiResult] = {}
+    ai_results_by_material: dict[int, list[AiResult]] = {}
+
+    for result in ai_results:
+        ai_results_by_material.setdefault(result.material_id, []).append(result)
+        if result.result_type == "summary" and result.material_id not in latest_summary_by_material:
+            latest_summary_by_material[result.material_id] = result
+        if result.result_type == "quiz" and result.material_id not in latest_quiz_by_material:
+            latest_quiz_by_material[result.material_id] = result
 
     return templates.TemplateResponse(
         "index.html",
@@ -202,6 +214,9 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "grades": grades,
             "routines": routines,
             "pomodoros": pomodoros,
+            "latest_summary_by_material": latest_summary_by_material,
+            "latest_quiz_by_material": latest_quiz_by_material,
+            "ai_results_by_material": ai_results_by_material,
         },
     )
 
@@ -429,6 +444,18 @@ def open_material(material_id: int, db: Session = Depends(get_db)):
     return RedirectResponse(url=signed_url, status_code=302)
 
 
+@app.post("/materials/{material_id}/delete")
+def delete_material(material_id: int, db: Session = Depends(get_db)):
+    material = db.query(Material).filter(Material.id == material_id).first()
+    if not material:
+        return RedirectResponse(url="/", status_code=303)
+
+    db.query(AiResult).filter(AiResult.material_id == material_id).delete(synchronize_session=False)
+    db.delete(material)
+    db.commit()
+    return RedirectResponse(url="/?panel=materialsPanel", status_code=303)
+
+
 @app.post("/materials/{material_id}/summarize")
 def summarize_material(material_id: int, db: Session = Depends(get_db)):
     material = db.query(Material).filter(Material.id == material_id).first()
@@ -498,6 +525,17 @@ def material_results(request: Request, material_id: int, db: Session = Depends(g
         "ai_results.html",
         {"request": request, "material": material, "results": results},
     )
+
+
+@app.post("/ai-results/{result_id}/delete")
+def delete_ai_result(result_id: int, db: Session = Depends(get_db)):
+    result = db.query(AiResult).filter(AiResult.id == result_id).first()
+    if not result:
+        return RedirectResponse(url="/?panel=materialsPanel", status_code=303)
+
+    db.delete(result)
+    db.commit()
+    return RedirectResponse(url="/?panel=materialsPanel", status_code=303)
 
 
 @app.get("/health")

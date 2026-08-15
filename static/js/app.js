@@ -234,3 +234,129 @@ if (pomodoroStart) {
     }, 1000);
   });
 }
+
+function parseQuizBlocks(rawText) {
+  if (!rawText || typeof rawText !== "string") {
+    return [];
+  }
+
+  const normalized = rawText.replace(/\r\n/g, "\n").trim();
+  if (!normalized) {
+    return [];
+  }
+
+  const chunks = normalized
+    .split(/\n(?=\d+\)\s)/g)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return chunks.map((chunk) => {
+    const firstLine = chunk.split("\n")[0] || "";
+    const question = firstLine.replace(/^\d+\)\s*/, "").trim() || "Soal";
+
+    const options = {};
+    const optionRegex = /^\s*([ABCD])[\).:\-]\s*(.+)$/gim;
+    let match;
+    while ((match = optionRegex.exec(chunk)) !== null) {
+      options[match[1].toUpperCase()] = match[2].trim();
+    }
+
+    const answerMatch = chunk.match(/Jawaban\s*:\s*([ABCD])/i);
+    const explanationMatch = chunk.match(/Penjelasan(?:\s+singkat)?\s*:\s*([\s\S]*)/i);
+
+    return {
+      question,
+      options,
+      answer: answerMatch ? answerMatch[1].toUpperCase() : "",
+      explanation: explanationMatch ? explanationMatch[1].trim() : "Tidak ada penjelasan dari AI."
+    };
+  });
+}
+
+function renderQuizInteractive() {
+  const quizBoxes = document.querySelectorAll(".quiz-box[data-quiz-content]");
+  if (!quizBoxes.length) {
+    return;
+  }
+
+  quizBoxes.forEach((box) => {
+    const renderTarget = box.querySelector(".quiz-render");
+    const fallback = box.querySelector(".quiz-fallback");
+    if (!renderTarget) {
+      return;
+    }
+
+    let decoded = box.dataset.quizContent || "";
+    try {
+      decoded = JSON.parse(decoded);
+    } catch (_error) {
+      // Keep original value when the content is already plain text.
+    }
+
+    const quizItems = parseQuizBlocks(decoded);
+    if (!quizItems.length) {
+      if (fallback) {
+        fallback.hidden = false;
+      }
+      return;
+    }
+
+    renderTarget.innerHTML = "";
+    const choiceKeys = ["A", "B", "C", "D"];
+
+    quizItems.forEach((item, index) => {
+      const wrapper = document.createElement("section");
+      wrapper.className = "quiz-item";
+
+      const title = document.createElement("p");
+      title.className = "quiz-question";
+      title.textContent = `${index + 1}. ${item.question}`;
+      wrapper.appendChild(title);
+
+      const choices = document.createElement("div");
+      choices.className = "quiz-choices";
+
+      const feedback = document.createElement("div");
+      feedback.className = "quiz-feedback";
+      feedback.textContent = "Pilih jawaban A/B/C/D untuk cek hasil.";
+
+      choiceKeys.forEach((key) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "quiz-choice";
+        const optText = item.options[key] || `Pilihan ${key}`;
+        btn.textContent = `${key}. ${optText}`;
+
+        btn.addEventListener("click", () => {
+          const isCorrect = item.answer === key && Boolean(item.answer);
+          choices.querySelectorAll(".quiz-choice").forEach((choiceEl) => {
+            choiceEl.classList.remove("is-correct", "is-wrong");
+          });
+
+          if (isCorrect) {
+            btn.classList.add("is-correct");
+            feedback.innerHTML = `<strong>Benar.</strong> ${item.explanation}`;
+            feedback.classList.remove("wrong");
+            feedback.classList.add("correct");
+            return;
+          }
+
+          btn.classList.add("is-wrong");
+          const correctText = item.options[item.answer] || "Jawaban tidak tersedia";
+          const answerLabel = item.answer || "-";
+          feedback.innerHTML = `<strong>Belum tepat.</strong> Jawaban benar: ${answerLabel}. ${correctText}. ${item.explanation}`;
+          feedback.classList.remove("correct");
+          feedback.classList.add("wrong");
+        });
+
+        choices.appendChild(btn);
+      });
+
+      wrapper.appendChild(choices);
+      wrapper.appendChild(feedback);
+      renderTarget.appendChild(wrapper);
+    });
+  });
+}
+
+renderQuizInteractive();
