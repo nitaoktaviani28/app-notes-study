@@ -66,9 +66,14 @@
         <input name="code" placeholder="Kode Matkul" />
         <button type="submit">Simpan Matkul</button>
       </form>
-      <div class="chips">
+      <div class="chips course-chips">
         {% for c in courses %}
-          <span>{{ c.name }}{% if c.code %} ({{ c.code }}){% endif %}</span>
+          <span>
+            {{ c.name }}{% if c.code %} ({{ c.code }}){% endif %}
+            <form method="post" action="/courses/{{ c.id }}/delete" class="inline-form danger-inline">
+              <button type="submit" onclick="return confirm('Hapus matkul ini? Semua jadwal, materi, dan nilai terkait juga akan terhapus.')">Hapus</button>
+            </form>
+          </span>
         {% endfor %}
       </div>
         </section>
@@ -77,6 +82,7 @@
       <section class="panel" id="schedulePanel">
         <section class="card">
           <h2>Jadwal Kuliah + Alert Telegram</h2>
+          <p class="helper-text">Reminder otomatis dikirim H-10 menit, H-5 menit, dan tepat saat kelas dimulai.</p>
       <form method="post" action="/schedules" class="form">
         <select name="course_id" required>
           <option value="">Pilih Matkul</option>
@@ -86,15 +92,17 @@
           <option value="mon">Senin</option><option value="tue">Selasa</option><option value="wed">Rabu</option>
           <option value="thu">Kamis</option><option value="fri">Jumat</option><option value="sat">Sabtu</option><option value="sun">Minggu</option>
         </select>
-        <input type="time" name="start_time" required />
-        <input type="time" name="end_time" />
+        <label class="field-label" for="startTimeInput">Waktu Mulai</label>
+        <input id="startTimeInput" type="time" name="start_time" required />
+        <label class="field-label" for="endTimeInput">Waktu Selesai</label>
+        <input id="endTimeInput" type="time" name="end_time" />
         <input name="location" placeholder="Lokasi" />
         <textarea name="note" placeholder="Catatan"></textarea>
         <button type="submit">Tambah Jadwal</button>
       </form>
       <ul class="list">
         {% for s in schedules %}
-          <li>{{ s.day_of_week|upper }} | {{ s.start_time }} - {{ s.end_time or '-' }} | {{ s.course.name }} | {{ s.location or '-' }}</li>
+          <li>{{ s.day_of_week|upper }} | Mulai {{ s.start_time }} - Selesai {{ s.end_time or '-' }} | {{ s.course.name }} | {{ s.location or '-' }}</li>
         {% endfor %}
       </ul>
         </section>
@@ -177,11 +185,16 @@
       <section class="panel" id="pomodoroPanel">
         <section class="card">
           <h2>Pomodoro Belajar</h2>
+          <p class="helper-text">Pilih durasi fokus cepat (25 / 40 / 60 menit), atur istirahat, lalu simpan ke riwayat.</p>
       <form method="post" action="/pomodoro" class="form">
         <input name="task" placeholder="Task belajar" required />
-        <input type="number" name="focus_minutes" value="25" min="1" required />
+        <select id="focusPreset" name="focus_minutes" required>
+          <option value="25">25 menit</option>
+          <option value="40">40 menit</option>
+          <option value="60">1 jam</option>
+        </select>
         <input type="number" name="break_minutes" value="5" min="1" required />
-        <input type="number" name="cycles" value="4" min="1" required />
+        <input type="hidden" name="cycles" value="1" />
         <button type="submit">Simpan Session</button>
       </form>
       <div class="timer-wrap">
@@ -190,7 +203,7 @@
       </div>
       <ul class="list">
         {% for p in pomodoros %}
-          <li>{{ p.task }} | {{ p.focus_minutes }}m / {{ p.break_minutes }}m x {{ p.cycles }}</li>
+          <li>{{ p.created_at.strftime('%d %b %H:%M') }} | {{ p.task }} | Fokus {{ p.focus_minutes }}m | Istirahat {{ p.break_minutes }}m</li>
         {% endfor %}
       </ul>
         </section>

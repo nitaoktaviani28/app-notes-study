@@ -1,13 +1,18 @@
 const clock = document.getElementById("clock");
 const dateText = document.getElementById("dateText");
 const themeToggle = document.getElementById("themeToggle");
+const isHomePage = Boolean(document.querySelector(".app-shell"));
 const savedTheme = localStorage.getItem("complite-theme") || "light";
 const featureButtons = document.querySelectorAll(".feature-btn[data-target]");
 const panels = document.querySelectorAll(".panel");
 
-document.body.setAttribute("data-theme", savedTheme);
+if (isHomePage) {
+  document.body.setAttribute("data-theme", savedTheme);
+} else {
+  document.body.removeAttribute("data-theme");
+}
 
-if (themeToggle) {
+if (themeToggle && isHomePage) {
   themeToggle.textContent = savedTheme === "dark" ? "Light" : "Dark";
   themeToggle.addEventListener("click", () => {
     const current = document.body.getAttribute("data-theme") || "light";
@@ -65,12 +70,17 @@ const calendarEl = document.getElementById("calendar");
 if (calendarEl) {
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: "timeGridWeek",
-    height: 580,
+    height: 650,
+    allDaySlot: false,
+    expandRows: true,
+    slotMinTime: "06:00:00",
+    slotMaxTime: "22:00:00",
+    nowIndicator: true,
     locale: "id",
     headerToolbar: {
       left: "prev,next today",
       center: "title",
-      right: "timeGridWeek,dayGridMonth"
+      right: "timeGridWeek"
     },
     events: window.calendarItems || []
   });
@@ -80,6 +90,7 @@ if (calendarEl) {
 
 const pomodoroDisplay = document.getElementById("pomodoroTimer");
 const pomodoroStart = document.getElementById("startPomodoro");
+const focusPreset = document.getElementById("focusPreset");
 let pomodoroSecs = 25 * 60;
 let pomodoroInterval;
 
@@ -96,8 +107,20 @@ if (pomodoroDisplay) {
   drawPomodoro();
 }
 
+if (focusPreset) {
+  focusPreset.addEventListener("change", () => {
+    const picked = Number(focusPreset.value || 25);
+    pomodoroSecs = picked * 60;
+    drawPomodoro();
+  });
+}
+
 if (pomodoroStart) {
   pomodoroStart.addEventListener("click", () => {
+    if (focusPreset) {
+      pomodoroSecs = Number(focusPreset.value || 25) * 60;
+      drawPomodoro();
+    }
     clearInterval(pomodoroInterval);
     pomodoroInterval = setInterval(() => {
       pomodoroSecs -= 1;

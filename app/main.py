@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -43,14 +43,32 @@ async def schedule_alert_job() -> None:
     current_day = now.strftime("%a").lower()
     current_time = now.strftime("%H:%M")
 
+    def to_hhmm(base: datetime, offset_minutes: int) -> str:
+        return (base + timedelta(minutes=offset_minutes)).strftime("%H:%M")
+
+    reminder_targets = {
+        -10: to_hhmm(now, 10),
+        -5: to_hhmm(now, 5),
+        0: current_time,
+    }
+
     from app.database import SessionLocal
 
     db = SessionLocal()
     try:
         classes = db.query(ScheduleItem).join(Course).all()
         for item in classes:
-            if item.day_of_week.lower() == current_day and item.start_time == current_time:
-                msg = f"[Kuliah Alert] {item.course.name} mulai {item.start_time} di {item.location or '-'}"
+            if item.day_of_week.lower() != current_day:
+                continue
+
+            if item.start_time == reminder_targets[-10]:
+                msg = f"[Kuliah Alert] 10 menit lagi: {item.course.name} mulai {item.start_time} di {item.location or '-'}"
+                await send_telegram_message(msg)
+            if item.start_time == reminder_targets[-5]:
+                msg = f"[Kuliah Alert] 5 menit lagi: {item.course.name} mulai {item.start_time} di {item.location or '-'}"
+                await send_telegram_message(msg)
+            if item.start_time == reminder_targets[0]:
+                msg = f"[Kuliah Alert] Sekarang mulai: {item.course.name} ({item.start_time}-{item.end_time or '-'}) di {item.location or '-'}"
                 await send_telegram_message(msg)
 
         routines = db.query(Routine).all()
@@ -108,6 +126,17 @@ def create_course(name: str = Form(...), code: str = Form(default=""), db: Sessi
 
     course = Course(name=payload.name, code=payload.code)
     db.add(course)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/courses/{course_id}/delete")
+def delete_course(course_id: int, db: Session = Depends(get_db)):
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        return RedirectResponse(url="/", status_code=303)
+
+    db.delete(course)
     db.commit()
     return RedirectResponse(url="/", status_code=303)
 

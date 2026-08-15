@@ -180,6 +180,18 @@ body {
   gap: 0.55rem;
 }
 
+.helper-text {
+  margin: 0 0 0.7rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.field-label {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin-top: 0.2rem;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -228,6 +240,18 @@ input,
 select,
 textarea {
   font-weight: 700;
+}
+
+select {
+  text-align: center;
+  text-align-last: center;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% - 2px), calc(100% - 12px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
 }
 
 textarea {
@@ -288,6 +312,23 @@ a {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0.25rem 0.55rem;
+}
+
+.course-chips span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.danger-inline button {
+  background: #e05566;
+  color: #fff;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.73rem;
+}
+
+.danger-inline button:hover {
+  background: #c93a4c;
 }
 
 .timer-wrap {
@@ -352,6 +393,28 @@ pre {
   text-align: center;
   padding: 0.55rem 0.2rem;
   font-size: 0.74rem;
+}
+
+.fc .fc-timegrid-axis-cushion,
+.fc .fc-timegrid-slot-label-cushion,
+.fc .fc-col-header-cell-cushion {
+  font-size: 0.78rem;
+}
+
+.fc .fc-day-sun .fc-col-header-cell-cushion,
+.fc .fc-day-sun .fc-daygrid-day-number,
+.fc .fc-day-sun .fc-timegrid-col-frame {
+  color: #c63838;
+}
+
+.fc .fc-toolbar {
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.fc .fc-button {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
 }
 
 @keyframes slideIn {
