@@ -509,6 +509,19 @@ pre {
   margin-right: 2px;
 }
 
+.fc-dayGridMonth-view .fc-daygrid-event {
+  margin-top: 2px;
+}
+
+.fc-event-compact {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  padding: 0 2px;
+}
+
 @keyframes slideIn {
   from {
     transform: translateY(-10px);

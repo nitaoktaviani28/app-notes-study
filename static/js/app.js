@@ -146,6 +146,13 @@ if (calendarEl) {
       }
     },
     eventContent: (arg) => {
+      if (arg.view.type === "dayGridMonth") {
+        const compactText = arg.timeText ? `${arg.timeText} ${arg.event.title}` : arg.event.title;
+        return {
+          html: `<div class="fc-event-compact">${compactText}</div>`
+        };
+      }
+
       const note = arg.event.extendedProps.note;
       const location = arg.event.extendedProps.location;
       const pieces = [];
