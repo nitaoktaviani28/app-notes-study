@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -70,6 +70,7 @@ class Routine(Base):
     day_of_week = Column(String(20), nullable=False)
     routine_date = Column(String(10), nullable=True)
     reminder_time = Column(String(10), nullable=False)
+    is_done = Column(Boolean, nullable=False, default=False)
     note = Column(Text, nullable=True)
 
 

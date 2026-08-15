@@ -29,6 +29,7 @@ class RoutineCreate(BaseModel):
     day_of_week: str
     routine_date: str | None = None
     reminder_time: str
+    is_done: bool = False
     note: str | None = None
 
 

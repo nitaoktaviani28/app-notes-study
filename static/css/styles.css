@@ -333,6 +333,41 @@ a {
   background: #c93a4c;
 }
 
+.checklist-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.2rem;
+  border-bottom: 1px dashed var(--line);
+}
+
+.check-main {
+  flex: 1;
+}
+
+.routine-check-form {
+  margin: 0;
+}
+
+.check-toggle {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.18rem 0.35rem;
+  line-height: 1;
+}
+
+.check-item.done .check-main {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
 .conflict-tag {
   display: inline-block;
   margin-left: 0.4rem;

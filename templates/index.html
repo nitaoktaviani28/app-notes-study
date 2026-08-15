@@ -167,21 +167,29 @@
 
       <section class="panel" id="routinePanel">
         <section class="card">
-          <h2>Daily Routine + Telegram Alert</h2>
+          <h2>Daily Routine Checklist + Telegram Alert</h2>
       <form method="post" action="/routines" class="form">
-        <input name="title" placeholder="Judul Routine" required />
+        <input name="title" placeholder="Activity (contoh: Review materi AI)" required />
         <label class="field-label" for="routineDateInput">Tanggal Routine</label>
         <input id="routineDateInput" type="date" name="routine_date" required />
         <label class="field-label" for="routineTimeInput">Jam Routine</label>
         <input id="routineTimeInput" type="time" name="reminder_time" required />
         <textarea name="note" placeholder="Catatan activity"></textarea>
-        <button type="submit">Tambah Routine</button>
+        <button type="submit">Tambah Activity</button>
       </form>
-      <ul class="list">
+      <ul class="list checklist-list">
         {% for r in routines %}
-          <li>
-            {{ r.routine_date or '-' }} ({{ r.day_of_week|upper }}) {{ r.reminder_time }} | {{ r.title }}
+          <li class="check-item {% if r.is_done %}done{% endif %}">
+            <form method="post" action="/routines/{{ r.id }}/toggle" class="inline-form routine-check-form">
+              <button type="submit" class="check-toggle" aria-label="Toggle checklist">{% if r.is_done %}☑{% else %}☐{% endif %}</button>
+            </form>
+            <span class="check-main">
+              {{ r.routine_date or '-' }} ({{ r.day_of_week|upper }}) {{ r.reminder_time }} | {{ r.title }}
+            </span>
             {% if r.note and '[CONFLICT]' in r.note %}<strong class="conflict-tag">CONFLICT</strong>{% endif %}
+            <form method="post" action="/routines/{{ r.id }}/delete" class="inline-form danger-inline">
+              <button type="submit" onclick="return confirm('Hapus activity routine ini?')">Hapus</button>
+            </form>
           </li>
         {% endfor %}
       </ul>
@@ -255,10 +263,11 @@
         title: "Routine: {{ r.title|replace('"', '\\"') }}",
         start: "{{ r.routine_date }}T{{ r.reminder_time }}:00",
         durationMinutes: 30,
-        color: "#2d9c7f",
+        color: "{{ '#7d8a98' if r.is_done else '#2d9c7f' }}",
         extendedProps: {
           note: "{{ (r.note or '-')|replace('"', '\\"') }}",
-          kind: "routine"
+          kind: "routine",
+          status: "{{ 'done' if r.is_done else 'todo' }}"
         }
       },
       {% endif %}

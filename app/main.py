@@ -43,6 +43,9 @@ def ensure_schema_updates() -> None:
     if "routine_date" not in routine_columns:
         with engine.begin() as conn:
             conn.execute(text("ALTER TABLE routines ADD COLUMN routine_date VARCHAR(10)"))
+    if "is_done" not in routine_columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE routines ADD COLUMN is_done BOOLEAN DEFAULT 0"))
 
 
 ensure_schema_updates()
@@ -314,6 +317,7 @@ def create_routine(
         day_of_week=day_of_week,
         routine_date=routine_date.strip(),
         reminder_time=reminder_time.strip(),
+        is_done=False,
         note=note.strip() or None,
     )
     if payload.routine_date and has_routine_conflict(db, payload.routine_date, payload.reminder_time):
@@ -322,6 +326,28 @@ def create_routine(
 
     routine = Routine(**payload.model_dump())
     db.add(routine)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/routines/{routine_id}/toggle")
+def toggle_routine(routine_id: int, db: Session = Depends(get_db)):
+    routine = db.query(Routine).filter(Routine.id == routine_id).first()
+    if not routine:
+        return RedirectResponse(url="/", status_code=303)
+
+    routine.is_done = not bool(routine.is_done)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/routines/{routine_id}/delete")
+def delete_routine(routine_id: int, db: Session = Depends(get_db)):
+    routine = db.query(Routine).filter(Routine.id == routine_id).first()
+    if not routine:
+        return RedirectResponse(url="/", status_code=303)
+
+    db.delete(routine)
     db.commit()
     return RedirectResponse(url="/", status_code=303)
 
