@@ -5,6 +5,7 @@ const isHomePage = Boolean(document.querySelector(".app-shell"));
 const savedTheme = localStorage.getItem("complite-theme") || "light";
 const featureButtons = document.querySelectorAll(".feature-btn[data-target]");
 const panels = document.querySelectorAll(".panel");
+const extraFeatureSelect = document.getElementById("extraFeatureSelect");
 const PANEL_KEY = "complite-last-panel";
 const breakInput = document.querySelector("input[name='break_minutes']");
 const breakInfo = document.getElementById("breakInfo");
@@ -53,8 +54,20 @@ function activatePanel(targetId) {
 featureButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     activatePanel(btn.dataset.target);
+    if (extraFeatureSelect) {
+      extraFeatureSelect.value = "";
+    }
   });
 });
+
+if (extraFeatureSelect) {
+  extraFeatureSelect.addEventListener("change", () => {
+    if (!extraFeatureSelect.value) {
+      return;
+    }
+    activatePanel(extraFeatureSelect.value);
+  });
+}
 
 const currentParams = new URLSearchParams(window.location.search);
 const panelFromQuery = currentParams.get("panel");

@@ -19,12 +19,16 @@
         <p>retro smart planner</p>
       </div>
       <button class="feature-btn active" data-target="dashboardPanel" type="button">Dashboard</button>
-      <button class="feature-btn" data-target="coursesPanel" type="button">Mata Kuliah</button>
-      <button class="feature-btn" data-target="schedulePanel" type="button">Jadwal</button>
       <button class="feature-btn" data-target="materialsPanel" type="button">Materi + AI</button>
-      <button class="feature-btn" data-target="gradesPanel" type="button">Nilai</button>
       <button class="feature-btn" data-target="routinePanel" type="button">Routine</button>
-      <button class="feature-btn" data-target="pomodoroPanel" type="button">Pomodoro</button>
+      <button class="feature-btn" data-target="schedulePanel" type="button">Jadwal</button>
+      <label class="field-label nav-dropdown-label" for="extraFeatureSelect">Fitur Lainnya</label>
+      <select id="extraFeatureSelect" class="nav-feature-select">
+        <option value="">Pilih fitur tambahan</option>
+        <option value="coursesPanel">Mata Kuliah</option>
+        <option value="gradesPanel">Nilai</option>
+        <option value="pomodoroPanel">Pomodoro</option>
+      </select>
     </aside>
 
     <section class="content-wrap">
@@ -117,7 +121,8 @@
       </section>
 
       <section class="panel" id="materialsPanel">
-        <section class="card">
+        <div class="panel-split">
+        <section class="card compact-form-card">
           <h2>Upload Materi (PDF/PPTX)</h2>
       <form method="post" action="/materials" enctype="multipart/form-data" class="form">
         <select name="course_id" required>
@@ -129,6 +134,9 @@
         <input type="file" name="file" accept=".pdf,.pptx" required />
         <button type="submit">Upload</button>
       </form>
+        </section>
+        <section class="card data-card-lg">
+      <h2>Data Materi + Aksi AI</h2>
       {% if materials %}
       <label class="field-label" for="materialFilter">Pilih materi yang ditampilkan</label>
       <select id="materialFilter" class="material-filter">
@@ -159,6 +167,7 @@
         {% endfor %}
       </ul>
         </section>
+        </div>
       </section>
 
       <section class="panel" id="gradesPanel">
@@ -184,7 +193,8 @@
       </section>
 
       <section class="panel" id="routinePanel">
-        <section class="card">
+        <div class="panel-split routine-split">
+        <section class="card compact-form-card">
           <h2>Daily Routine Checklist + Telegram Alert</h2>
       <form method="post" action="/routines" class="form">
         <input name="title" placeholder="Activity (contoh: Review materi AI)" required />
@@ -195,6 +205,9 @@
         <textarea name="note" placeholder="Catatan activity"></textarea>
         <button type="submit">Tambah Activity</button>
       </form>
+        </section>
+        <section class="card data-card-xl">
+          <h2>Checklist Routine</h2>
       <ul class="list checklist-list">
         {% for r in routines %}
           <li class="check-item {% if r.is_done %}done{% endif %}">
@@ -212,6 +225,7 @@
         {% endfor %}
       </ul>
         </section>
+        </div>
       </section>
 
       <section class="panel" id="pomodoroPanel">

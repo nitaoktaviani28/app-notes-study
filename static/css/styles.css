@@ -89,6 +89,15 @@ body {
   animation: slideIn 0.5s ease;
 }
 
+.nav-dropdown-label {
+  margin-top: 0.45rem;
+}
+
+.nav-feature-select {
+  width: 100%;
+  font-size: 0.88rem;
+}
+
 .brand {
   padding: 0.35rem 0.3rem 0.7rem;
   border-bottom: 1px dashed var(--line-strong);
@@ -136,6 +145,17 @@ body {
   min-width: 0;
 }
 
+.panel-split {
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.routine-split {
+  grid-template-columns: minmax(260px, 360px) minmax(0, 1.25fr);
+}
+
 .panel {
   display: none;
   animation: cardRise 0.35s ease;
@@ -180,6 +200,10 @@ body {
 .form {
   display: grid;
   gap: 0.55rem;
+}
+
+.compact-form-card .form {
+  max-width: 320px;
 }
 
 .helper-text {
@@ -288,8 +312,16 @@ a {
 .list {
   margin: 0.8rem 0 0;
   padding-left: 1rem;
-  max-height: 220px;
+  max-height: 420px;
   overflow: auto;
+}
+
+.data-card-lg .list {
+  max-height: 520px;
+}
+
+.data-card-xl .list {
+  max-height: 620px;
 }
 
 .material-head {
@@ -473,7 +505,7 @@ a {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.35rem 0.2rem;
+  padding: 0.5rem 0.3rem;
   border-bottom: 1px dashed var(--line);
 }
 
@@ -490,7 +522,7 @@ a {
   color: var(--ink);
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 0.18rem 0.35rem;
+  padding: 0.24rem 0.42rem;
   line-height: 1;
 }
 
@@ -698,5 +730,14 @@ pre {
 
   .mobile-nav {
     display: grid;
+  }
+
+  .panel-split,
+  .routine-split {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-form-card .form {
+    max-width: 100%;
   }
 }
