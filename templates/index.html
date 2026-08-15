@@ -6,25 +6,61 @@
   <title>complite study</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
 <body>
   <div class="bg-layer"></div>
   <button id="themeToggle" class="theme-toggle" type="button" aria-label="Ganti tema">Dark</button>
-  <header class="hero">
-    <h1>complite study</h1>
-    <p>Smart planner kuliah: jadwal, nilai, materi, AI, pomodoro, dan daily routine.</p>
-    <div class="clock-card">
-      <span id="clock"></span>
-      <small id="dateText"></small>
-    </div>
-  </header>
+  <main class="app-shell">
+    <aside class="feature-nav">
+      <div class="brand">
+        <h1>complite study</h1>
+        <p>retro smart planner</p>
+      </div>
+      <button class="feature-btn active" data-target="dashboardPanel" type="button">Dashboard</button>
+      <button class="feature-btn" data-target="coursesPanel" type="button">Mata Kuliah</button>
+      <button class="feature-btn" data-target="schedulePanel" type="button">Jadwal</button>
+      <button class="feature-btn" data-target="materialsPanel" type="button">Materi + AI</button>
+      <button class="feature-btn" data-target="gradesPanel" type="button">Nilai</button>
+      <button class="feature-btn" data-target="routinePanel" type="button">Routine</button>
+      <button class="feature-btn" data-target="pomodoroPanel" type="button">Pomodoro</button>
+    </aside>
 
-  <main class="grid">
-    <section class="card">
-      <h2>Tambah Mata Kuliah</h2>
+    <section class="content-wrap">
+      <section class="panel active" id="dashboardPanel">
+        <header class="hero panel-hero">
+          <h2>Smart planner kuliah</h2>
+          <p>Kelola jadwal, nilai, materi, AI, pomodoro, dan daily routine dari satu dashboard.</p>
+          <div class="clock-card">
+            <span id="clock"></span>
+            <small id="dateText"></small>
+          </div>
+        </header>
+        <div class="dashboard-grid">
+          <article class="card stat-card">
+            <h3>Total Matkul</h3>
+            <strong>{{ courses|length }}</strong>
+          </article>
+          <article class="card stat-card">
+            <h3>Total Jadwal</h3>
+            <strong>{{ schedules|length }}</strong>
+          </article>
+          <article class="card stat-card">
+            <h3>Total Materi</h3>
+            <strong>{{ materials|length }}</strong>
+          </article>
+          <article class="card stat-card">
+            <h3>Total Routine</h3>
+            <strong>{{ routines|length }}</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="coursesPanel">
+        <section class="card">
+          <h2>Tambah Mata Kuliah</h2>
       <form method="post" action="/courses" class="form">
         <input name="name" placeholder="Nama Matkul" required />
         <input name="code" placeholder="Kode Matkul" />
@@ -35,10 +71,12 @@
           <span>{{ c.name }}{% if c.code %} ({{ c.code }}){% endif %}</span>
         {% endfor %}
       </div>
-    </section>
+        </section>
+      </section>
 
-    <section class="card">
-      <h2>Jadwal Kuliah + Alert Telegram</h2>
+      <section class="panel" id="schedulePanel">
+        <section class="card">
+          <h2>Jadwal Kuliah + Alert Telegram</h2>
       <form method="post" action="/schedules" class="form">
         <select name="course_id" required>
           <option value="">Pilih Matkul</option>
@@ -59,15 +97,16 @@
           <li>{{ s.day_of_week|upper }} | {{ s.start_time }} - {{ s.end_time or '-' }} | {{ s.course.name }} | {{ s.location or '-' }}</li>
         {% endfor %}
       </ul>
-    </section>
+        </section>
+        <section class="card">
+          <h2>Kalender Kuliah</h2>
+          <div id="calendar"></div>
+        </section>
+      </section>
 
-    <section class="card wide">
-      <h2>Kalender Kuliah</h2>
-      <div id="calendar"></div>
-    </section>
-
-    <section class="card">
-      <h2>Upload Materi (PDF/PPTX)</h2>
+      <section class="panel" id="materialsPanel">
+        <section class="card">
+          <h2>Upload Materi (PDF/PPTX)</h2>
       <form method="post" action="/materials" enctype="multipart/form-data" class="form">
         <select name="course_id" required>
           <option value="">Pilih Matkul</option>
@@ -89,10 +128,12 @@
           </li>
         {% endfor %}
       </ul>
-    </section>
+        </section>
+      </section>
 
-    <section class="card">
-      <h2>Nilai Tracker</h2>
+      <section class="panel" id="gradesPanel">
+        <section class="card">
+          <h2>Nilai Tracker</h2>
       <form method="post" action="/grades" class="form">
         <select name="course_id" required>
           <option value="">Pilih Matkul</option>
@@ -109,10 +150,12 @@
           <li>Semester {{ g.semester }} | {{ g.course.name }} | Nilai {{ g.score }}</li>
         {% endfor %}
       </ul>
-    </section>
+        </section>
+      </section>
 
-    <section class="card">
-      <h2>Daily Routine + Telegram Alert</h2>
+      <section class="panel" id="routinePanel">
+        <section class="card">
+          <h2>Daily Routine + Telegram Alert</h2>
       <form method="post" action="/routines" class="form">
         <input name="title" placeholder="Judul Routine" required />
         <select name="day_of_week" required>
@@ -128,10 +171,12 @@
           <li>{{ r.day_of_week|upper }} {{ r.reminder_time }} | {{ r.title }}</li>
         {% endfor %}
       </ul>
-    </section>
+        </section>
+      </section>
 
-    <section class="card">
-      <h2>Pomodoro Belajar</h2>
+      <section class="panel" id="pomodoroPanel">
+        <section class="card">
+          <h2>Pomodoro Belajar</h2>
       <form method="post" action="/pomodoro" class="form">
         <input name="task" placeholder="Task belajar" required />
         <input type="number" name="focus_minutes" value="25" min="1" required />
@@ -148,8 +193,18 @@
           <li>{{ p.task }} | {{ p.focus_minutes }}m / {{ p.break_minutes }}m x {{ p.cycles }}</li>
         {% endfor %}
       </ul>
+        </section>
+      </section>
     </section>
   </main>
+
+  <nav class="mobile-nav">
+    <button class="feature-btn active" data-target="dashboardPanel" type="button">Home</button>
+    <button class="feature-btn" data-target="schedulePanel" type="button">Jadwal</button>
+    <button class="feature-btn" data-target="materialsPanel" type="button">Materi</button>
+    <button class="feature-btn" data-target="gradesPanel" type="button">Nilai</button>
+    <button class="feature-btn" data-target="pomodoroPanel" type="button">Timer</button>
+  </nav>
 
   <script>
     window.calendarItems = [

@@ -2,6 +2,8 @@ const clock = document.getElementById("clock");
 const dateText = document.getElementById("dateText");
 const themeToggle = document.getElementById("themeToggle");
 const savedTheme = localStorage.getItem("complite-theme") || "light";
+const featureButtons = document.querySelectorAll(".feature-btn[data-target]");
+const panels = document.querySelectorAll(".panel");
 
 document.body.setAttribute("data-theme", savedTheme);
 
@@ -15,6 +17,30 @@ if (themeToggle) {
     themeToggle.textContent = next === "dark" ? "Light" : "Dark";
   });
 }
+
+function activatePanel(targetId) {
+  if (!targetId) {
+    return;
+  }
+
+  panels.forEach((panel) => {
+    panel.classList.toggle("active", panel.id === targetId);
+  });
+
+  featureButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.target === targetId);
+  });
+
+  if (targetId === "schedulePanel" && window.compliteCalendar) {
+    window.compliteCalendar.updateSize();
+  }
+}
+
+featureButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    activatePanel(btn.dataset.target);
+  });
+});
 
 function updateClock() {
   if (!clock || !dateText) {
@@ -49,6 +75,7 @@ if (calendarEl) {
     events: window.calendarItems || []
   });
   calendar.render();
+  window.compliteCalendar = calendar;
 }
 
 const pomodoroDisplay = document.getElementById("pomodoroTimer");
